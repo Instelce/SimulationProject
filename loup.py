@@ -1,7 +1,9 @@
 from random import randint
 
+from entitie import Entitie
 
-class Loup:
+
+class Loup(Entitie):
     """ Loup
     ---
     
@@ -13,31 +15,23 @@ class Loup:
         max_energie : int - 200
         lose_energie : tuple - (10, 30)
         start_energie : int - random int between 80 and 130
+        color : tuple
     """
-    def __init__(self, monde, pos) -> None:
+    def __init__(self, pos, monde) -> None:
+        super().__init__(pos, monde)
+
         self.type = 'loup'
-        self.monde = monde
-        self.pos = pos
         self.reproduction_energie = 250
         self.max_energie = 300
         self.lose_energie = (2, 8)
         self.start_energie = randint(80, 130)
-    
+        self.color = (100, 100, 100, 1)
+
     def action(self) -> None:
         """ Action : food, movement, reproduction """
         pass
-
-    def getColor(self):
-        """ Return color (int, int, int, int) """
-        return (100, 100, 100, 1)
 
     def getAroundMouton(self) -> tuple:
         """ Return the direction to go to the nearest sheep """
         return
 
-    def dead(self):
-        """ Destroy object """
-        del self
-
-    def loseEnergie(self) -> None:
-        pass

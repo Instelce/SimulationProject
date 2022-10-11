@@ -1,4 +1,7 @@
+from random import randint
+
 from herbe import Herbe
+from mouton import Mouton
 
 
 class Monde:
@@ -22,7 +25,7 @@ class Monde:
         """ Itaration of world"""
         pass
 
-    def getHerbeAt(self, position) -> Herbe:
+    def getHerbeAt(self, position) -> Herbe or None:
         """ Return None or Herbe object """
         for herbe in self.liste_herbe:
             if herbe.pos == position:
@@ -30,8 +33,16 @@ class Monde:
         return None
 
     def getEntitiesAt(self, position) -> list:
-        """ Create entitie at position """
+        """ entitie at position """
         return []
 
     def generate(self, entitie, pourcentage) -> None:
-        pass
+        for x in range(self.dimensions[0]):
+            for y in range(self.dimensions[1]):
+                if randint(0, 100) <= pourcentage: # Can generate
+                    if entitie == 'herbe':
+                        self.liste_herbe.append(Herbe((x,y), randint(1,5), (52, 140, 49), 0))
+                    if entitie == 'mouton':
+                        self.liste_mouton.append(Mouton((x,y), self))
+                        
+
