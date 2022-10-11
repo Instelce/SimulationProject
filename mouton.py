@@ -1,5 +1,7 @@
 from random import randint
 
+from numpy import ma
+
 from entitie import Entitie
 
 
@@ -33,50 +35,43 @@ class Mouton(Entitie):
 
     def getAroundHerbe(self) -> tuple:
         """ Return the direction to go to the nearest herbs """
-        x_right_grass = {'count': 0, 'pos': self.pos}
-        x_left_grass = {'count': 0, 'pos': self.pos}
-        y_top_grass = {'count': 0, 'pos': self.pos}
-        y_down_grass = {'count': 0, 'pos': self.pos}
+        self.sides = {
+            'x_right': {'amount': 0, 'pos': self.pos},
+            'x_left': {'amount': 0, 'pos': self.pos},
+            'y_top': {'amount': 0, 'pos': self.pos},
+            'y_down': {'amount': 0, 'pos': self.pos},
+        }
 
         x_range = (self.pos[0]-4, self.pos[0]+4)
-        for herbe in self.monde.liste_herbe:
-            if x_range[0] < herbe.pos[0] < x_range[1]:
+        for x in range(x_range[0], x_range[1]):
+            if self.monde.getHerbeAt((x, self.pos[1])) != None:
+                herbe = self.monde.getHerbeAt((x, self.pos[1]))
                 if herbe.pos[0] > self.pos[0]:
-                    x_right_grass['count'] += 1
-
-                    if x_right_grass['pos'][0] < herbe.pos[0]:
-                        x_right_grass['pos'] = herbe.pos
+                    self.sides['x_right']['amount'] = herbe.amount
+                    if self.sides['x_right']['pos'][0] < herbe.pos[0]:
+                        self.sides['x_right']['pos'] = herbe.pos
                 if herbe.pos[0] < self.pos[0]:
-                    x_left_grass['count'] += 1
-
-                    if x_left_grass['pos'][0] > herbe.pos[0]:
-                        x_left_grass['pos'] = herbe.pos
+                    self.sides['x_left']['amount'] = herbe.amount
+                    if self.sides['x_left']['pos'][0] > herbe.pos[0]:
+                        self.sides['x_left']['pos'] = herbe.pos
 
         y_range = (self.pos[1]-4, self.pos[1]+4)
-        for herbe in self.monde.liste_herbe:
-            if y_range[0] < herbe.pos[1] < y_range[1]:
-                if herbe.pos[1] < self.pos[1]:
-                    y_top_grass['count'] += 1
-
-                    if y_top_grass['pos'][1] > herbe.pos[1]:
-                        y_top_grass['pos'] = herbe.pos
+        for y in range(y_range[0], y_range[1]):
+            if self.monde.getHerbeAt((self.pos[0], y)) != None:
+                herbe = self.monde.getHerbeAt((self.pos[0], y))
                 if herbe.pos[1] > self.pos[1]:
-                    y_down_grass['count'] += 1
+                    self.sides['y_top']['amount'] = herbe.amount
+                    if self.sides['y_top']['pos'][1] > herbe.pos[1]:
+                        self.sides['y_top']['pos'] = herbe.pos
+                if herbe.pos[1] < self.pos[1]:
+                    self.sides['y_down']['amount'] = herbe.amount
+                    if self.sides['y_down']['pos'][1] < herbe.pos[1]:
+                        self.sides['y_down']['pos'] = herbe.pos
 
-                    if y_down_grass['pos'][1] < herbe.pos[1]:
-                        y_down_grass['pos'] = herbe.pos
-
-        print(x_left_grass, x_right_grass)
-        print(y_top_grass, y_down_grass)
+        # print(x_left_grass, x_right_grass)
+        # print(y_top_grass, y_down_grass)
         
-        if x_right_grass['count'] > x_left_grass['count']:
-            return x_right_grass['pos']
-        elif x_left_grass['count'] > x_right_grass['count']:
-            return x_left_grass['pos']
-        elif y_top_grass['count'] > y_down_grass['count']:
-            return y_top_grass['pos']
-        elif y_down_grass['count'] > y_top_grass['count']:
-            return y_down_grass['pos']
+        all_side_amount = {self.sides['x_right']['amount']: 'x_right', self.sides['x_left']['amount']: 'x_left', self.sides['y_top']['amount']: 'y_top', self.sides['y_down']['amount']: 'y_down'}
+        self.max_side = all_side_amount.get(max(all_side_amount))
 
-        return self.pos
-
+        return self.sides[self.max_side]['pos']
