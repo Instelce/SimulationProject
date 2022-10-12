@@ -1,0 +1,31 @@
+{
+    "plants": {
+        "grass": {
+            "type": "grass",
+            "color": [50, 180, 50],
+            "food_amount": [25, 100],
+            "growth_speed": 5,
+            "max_regrowth": 100,
+
+            "generate_percentage": 20
+        }
+    },
+    "mammals": {
+        "sheep": {
+            "type": "sheep",
+            "color": [100, 100, 100],
+            "food_amount": 50,
+            "food_taken": 40,
+            "food_type": "grass",
+            "enemy_type": "wolf",
+            "reproduction_energie": 160,
+            "max_energie": 200,
+            "lose_energie": [10, 30],
+            "start_energie": [80, 130],
+            "vision_range": 4,
+            "vision_type": "restricted",
+
+            "generate_percentage": 1
+        }
+    }
+}

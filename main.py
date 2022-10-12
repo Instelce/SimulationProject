@@ -1,7 +1,8 @@
 import pygame
 import sys
+import json
 
-from monde import Monde
+from world import World
 from debug import debug
 
 
@@ -11,52 +12,101 @@ WORLD_HEIGHT = 20
 SCREEN_WIDTH = TILE_SIZE * WORLD_WIDTH
 SCREEN_HEIGHT = TILE_SIZE * WORLD_HEIGHT
 
+# Methods
+def get_font(font_size):
+    return pygame.font.SysFont('Calibri', font_size) 
 
-class SpriteEntity(pygame.sprite.Sprite):
+
+def show_bar(current, max_amount, bg_rect, color):
+    display_surface = pygame.display.get_surface()
+
+    # display bg_rect
+    pygame.draw.rect(display_surface, (color[0]/2, color[1]/2, color[2]/2), bg_rect)
+    
+    # convert current value to pixel
+    ratio = current / max_amount
+    current_width = bg_rect.width * ratio
+    current_rect = bg_rect.copy()
+    current_rect.width = current_width
+
+    # draw the bar
+    pygame.draw.rect(display_surface, color, current_rect)
+
+
+class EntitySprite(pygame.sprite.Sprite):
     """ Entity for Interface 
     ---
     
     Attributes
-        pos : int
-        groups : Group
-        entity : Entity - sheep or wolf
+        entity : Entity
+        groups : list - list of pygame sprite Group object
+        display_surface : Surface - main pygame surface
+        image : Surface
+        rect : Rect
     """
-    def __init__(self, pos, groups, entity) -> None:
+    def __init__(self, entity, groups) -> None:
         super().__init__(groups)
-        self.pos = pos
         self.entity = entity
+
+        self.display_surface = pygame.display.get_surface()
 
         self.image = pygame.Surface((TILE_SIZE, TILE_SIZE))
         self.image.fill(self.entity.getColor())
 
-        self.rect = self.imgage.get_rect(topleft=self.pos)
+        self.rect = self.image.get_rect(topleft=(self.entity.pos[0]*TILE_SIZE, self.entity.pos[1]*TILE_SIZE))
+
+        if self.entity.type != 'grass':
+            self.energie_rect = pygame.Rect(self.rect.left, self.rect.top, TILE_SIZE, 5)
+
+        if self.entity.type == 'grass':
+            self.amount_text_surf = get_font(10).render(str(self.entity.food_amount), True, (255,255,255))
+            self.amount_text_rect = self.amount_text_surf.get_rect(topleft=self.rect.center)
+
+    def update(self):
+        if self.entity.type == 'grass': self.display_surface.blit(self.amount_text_surf, self.amount_text_rect)
+        if self.entity.type != 'grass': 
+            self.energie_rect = pygame.Rect(self.rect.left, self.rect.top, TILE_SIZE, 5)
+            show_bar(self.entity.energie, self.entity.max_energie, self.energie_rect, (250, 220, 45))
     
 
 class Interface:
     def __init__(self) -> None:
         pygame.init()
 
+        # Setup interface
         pygame.display.set_caption('Simulation')
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
+        self.last_time = pygame.time.get_ticks()
 
-        self.entities = []
+        # Entities data
+        self.entities_data = json.load(open('data/entities.json'))
 
         # Setup world
-        self.world = Monde((WORLD_WIDTH, WORLD_HEIGHT))
-        self.world.generate('herbe', 10)
-        self.world.generate('mouton', 1)
-        self.update_world()
+        self.world = World((WORLD_WIDTH, WORLD_HEIGHT))
 
-        for mouton in self.world.liste_mouton:
-            print("Mouton", mouton.pos)
-            print("Go to", mouton.getAroundHerbe())
-            print("Max side", mouton.max_side)
-            # print("Amount", self.world.getHerbeAt(mouton.getAroundHerbe()).amount)
-            print("All side", mouton.sides)
+        for category_name, category_data in self.entities_data.items():
+            print(category_name)
+            for entity_type in category_data:
+                print("--", entity_type)
+                self.world.generate(category_name, self.entities_data[category_name][entity_type])
+
+        # Create all sprites
+        self.entities = pygame.sprite.Group()
+        for entities_list in self.world.entities_dict.values():
+            for entity in entities_list:
+                entity_sprite = EntitySprite(entity, [self.entities])
+                self.entities.add(entity_sprite) 
+
+        for sheep in self.world.entities_dict['sheep']:
+            print("sheep", sheep.pos)
+            print("Go to", sheep.getAroundFood())
+            print("Data", sheep.sides)
+            #print("Max side", sheep.max_side, "| food_amount", sheep.sides[sheep.max_side]['food_amount'])
+            #print("All side", sheep.sides)
             print('------------------')
  
-        # Grid 
+        # Create grid 
         self.grid_rects = [] 
         for x in range(0, SCREEN_WIDTH, TILE_SIZE):
             for y in range(0, SCREEN_HEIGHT, TILE_SIZE):
@@ -65,6 +115,7 @@ class Interface:
         self.selected_rect = self.grid_rects[0]
  
     def grid(self): 
+        """ Display grid """
         for rect in self.grid_rects:
             if rect.collidepoint(self.mouse_pos):
                 self.selected_rect = rect
@@ -72,17 +123,21 @@ class Interface:
             else:
                 pygame.draw.rect(self.screen, (0,0,0), rect, 1)
  
-    def update_world(self): 
-        # Grass 
-        for herbe in self.world.liste_herbe:
-            rect = pygame.Rect(herbe.pos[0] * TILE_SIZE, herbe.pos[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-            self.entities.append([herbe.getColor(), rect]) 
- 
-        # Entities 
-        for mouton in self.world.liste_mouton:
-            rect = pygame.Rect(mouton.pos[0] * TILE_SIZE, mouton.pos[1] * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-            self.entities.append([mouton.getColor(), rect]) 
- 
+    def update(self):
+        current_time = pygame.time.get_ticks()
+
+        if current_time - self.last_time >= 1000:
+            self.last_time = current_time
+            
+            self.world.iteration()
+
+            # Reset and create all sprites
+            self.entities = pygame.sprite.Group()
+            for entities_list in self.world.entities_dict.values():
+                for entity in entities_list:
+                    entity_sprite = EntitySprite(entity, [self.entities])
+                    self.entities.add(entity_sprite) 
+     
     def run(self): 
         while 1: 
             self.mouse_pos = pygame.mouse.get_pos()
@@ -95,17 +150,19 @@ class Interface:
             self.screen.fill((10, 10, 10))
  
             # Method 
+            self.update()
             self.grid() 
 
-            # Display entities
-            for entity in self.entities:
-                pygame.draw.rect(self.screen, entity[0], entity[1])
+            # Display and update entities
+            self.entities.draw(self.screen)
+            self.entities.update()
 
-            for mouton in self.world.liste_mouton:
-                pygame.draw.line(self.screen, (0, 255, 255), (mouton.pos[0]*TILE_SIZE, mouton.pos[1]*TILE_SIZE), (mouton.getAroundHerbe()[0]*TILE_SIZE, mouton.getAroundHerbe()[1]*TILE_SIZE), 4)
+            for sheep in self.world.entities_dict['sheep']:
+                pygame.draw.line(self.screen, (0, 255, 255), (sheep.pos[0]*TILE_SIZE+TILE_SIZE//2, sheep.pos[1]*TILE_SIZE+TILE_SIZE//2), (sheep.getAroundFood()[0]*TILE_SIZE+TILE_SIZE//2, sheep.getAroundFood()[1]*TILE_SIZE+TILE_SIZE//2), 4)
 
             # Debug
             debug((self.selected_rect.x / TILE_SIZE, self.selected_rect.y / TILE_SIZE))
+            debug(f"{len(self.entities.sprites())} / {WORLD_WIDTH*WORLD_HEIGHT}", 30)
 
             pygame.display.update()
             self.clock.tick(30)
