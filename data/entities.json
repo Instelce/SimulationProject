@@ -16,6 +16,7 @@
             "color": [100, 100, 100],
             "food_amount": 50,
             "food_taken": 40,
+            "energie_per_food_taken": 20,
             "food_type": "grass",
             "enemy_type": "wolf",
             "reproduction_energie": 160,

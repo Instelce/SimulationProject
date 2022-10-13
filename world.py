@@ -34,8 +34,16 @@ class World:
                 return grass
         return None
 
+    def getEntityAt(self, position, entity_type):
+        """ Returns list of entities type at position """
+        entity = None
+        for entity in self.entities_dict.get(entity_type):
+            if entity.pos == position and entity_type == entity.type:
+                entity = entity
+        return entity
+
     def getEntitiesAt(self, position) -> list:
-        """ entitie at position """
+        """ Returns list of entities at position """
         entities_in_pos = []
         for entities_list in self.entities_dict.values():
             for entity in entities_list:
@@ -66,6 +74,7 @@ class World:
                                 entity_data['color'], 
                                 entity_data['food_amount'], 
                                 entity_data['food_taken'],
+                                entity_data['energie_per_food_taken'],
                                 entity_data['food_type'], 
                                 entity_data['enemy_type'], 
                                 entity_data['reproduction_energie'], 

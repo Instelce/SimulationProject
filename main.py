@@ -18,6 +18,7 @@ def get_font(font_size):
 
 
 def show_bar(current, max_amount, bg_rect, color):
+    """ Display bar """
     display_surface = pygame.display.get_surface()
 
     # display bg_rect
@@ -63,7 +64,8 @@ class EntitySprite(pygame.sprite.Sprite):
             self.amount_text_rect = self.amount_text_surf.get_rect(topleft=self.rect.center)
 
     def update(self):
-        if self.entity.type == 'grass': self.display_surface.blit(self.amount_text_surf, self.amount_text_rect)
+        if self.entity.type == 'grass': 
+            self.display_surface.blit(self.amount_text_surf, self.amount_text_rect)
         if self.entity.type != 'grass': 
             self.energie_rect = pygame.Rect(self.rect.left, self.rect.top, TILE_SIZE, 5)
             show_bar(self.entity.energie, self.entity.max_energie, self.energie_rect, (250, 220, 45))
@@ -78,6 +80,8 @@ class Interface:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
         self.last_time = pygame.time.get_ticks()
+        self.keys_time = pygame.time.get_ticks()
+        self.pause = False
 
         # Entities data
         self.entities_data = json.load(open('data/entities.json'))
@@ -97,14 +101,6 @@ class Interface:
             for entity in entities_list:
                 entity_sprite = EntitySprite(entity, [self.entities])
                 self.entities.add(entity_sprite) 
-
-        for sheep in self.world.entities_dict['sheep']:
-            print("sheep", sheep.pos)
-            print("Go to", sheep.getAroundFood())
-            print("Data", sheep.sides)
-            #print("Max side", sheep.max_side, "| food_amount", sheep.sides[sheep.max_side]['food_amount'])
-            #print("All side", sheep.sides)
-            print('------------------')
  
         # Create grid 
         self.grid_rects = [] 
@@ -113,6 +109,14 @@ class Interface:
                 rect = pygame.Rect(x, y, TILE_SIZE, TILE_SIZE)
                 self.grid_rects.append(rect)
         self.selected_rect = self.grid_rects[0]
+
+    def input(self):
+        keys = pygame.key.get_pressed()
+        current_time = pygame.time.get_ticks()
+
+        if current_time - self.keys_time >= 300:
+            if keys[pygame.K_SPACE]:
+                self.pause = not self.pause
  
     def grid(self): 
         """ Display grid """
@@ -136,7 +140,7 @@ class Interface:
             for entities_list in self.world.entities_dict.values():
                 for entity in entities_list:
                     entity_sprite = EntitySprite(entity, [self.entities])
-                    self.entities.add(entity_sprite) 
+                    self.entities.add(entity_sprite)
      
     def run(self): 
         while 1: 
@@ -145,12 +149,14 @@ class Interface:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    sys.exit() 
+                    sys.exit()
  
             self.screen.fill((10, 10, 10))
  
-            # Method 
-            self.update()
+            # Method
+            self.input()
+            if not self.pause:
+                self.update()   
             self.grid() 
 
             # Display and update entities
@@ -163,6 +169,7 @@ class Interface:
             # Debug
             debug((self.selected_rect.x / TILE_SIZE, self.selected_rect.y / TILE_SIZE))
             debug(f"{len(self.entities.sprites())} / {WORLD_WIDTH*WORLD_HEIGHT}", 30)
+            debug(f"pause {self.pause}", 50)
 
             pygame.display.update()
             self.clock.tick(30)
