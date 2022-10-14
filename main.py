@@ -2,15 +2,11 @@ import pygame
 import sys
 import json
 
+from settings import *
+from menu import *
 from world import World
 from debug import debug
 
-
-TILE_SIZE = 32
-WORLD_WIDTH = 30
-WORLD_HEIGHT = 20
-SCREEN_WIDTH = TILE_SIZE * WORLD_WIDTH
-SCREEN_HEIGHT = TILE_SIZE * WORLD_HEIGHT
 
 # Methods
 def get_font(font_size):
@@ -64,6 +60,11 @@ class EntitySprite(pygame.sprite.Sprite):
             self.amount_text_rect = self.amount_text_surf.get_rect(topleft=self.rect.center)
 
     def update(self):
+        self.image = pygame.Surface((TILE_SIZE, TILE_SIZE))
+        self.image.fill(self.entity.getColor())
+
+        self.rect = self.image.get_rect(topleft=(self.entity.pos[0]*TILE_SIZE, self.entity.pos[1]*TILE_SIZE))
+
         if self.entity.type == 'grass': 
             self.display_surface.blit(self.amount_text_surf, self.amount_text_rect)
         if self.entity.type != 'grass': 
@@ -80,21 +81,40 @@ class Interface:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
         self.last_time = pygame.time.get_ticks()
-        self.keys_time = pygame.time.get_ticks()
         self.pause = False
+
+        # Components
+        self.show_components = True
+        self.components = ComponentsGroup()
 
         # Entities data
         self.entities_data = json.load(open('data/entities.json'))
 
         # Setup world
         self.world = World((WORLD_WIDTH, WORLD_HEIGHT))
-
-        for category_name, category_data in self.entities_data.items():
-            print(category_name)
+        for category_data in self.entities_data.values():
             for entity_type in category_data:
-                print("--", entity_type)
-                self.world.generate(category_name, self.entities_data[category_name][entity_type])
+                self.world.entities_dict[entity_type] = []
 
+        # Entities buttons
+        self.bestiary_panel_groups = ComponentsGroup()
+        self.entities_buttons = {}
+        for index_category, category in enumerate(self.entities_data):
+            category_data = self.entities_data[category]
+            self.entities_buttons[category] = []
+            for index_entity, entity_type in enumerate(category_data):
+                
+                size = 20
+                gap = 10
+                surface = pygame.Surface((size, size))
+                surface.fill(category_data[entity_type]['color'])
+                pos = (20+(gap+size)*index_entity, SCREEN_HEIGHT-20-((gap+size)*len(self.entities_data))+((gap+size)*index_category))
+                self.entities_buttons[category].append(ImageButton(pos, [self.components], surface))
+                surface = pygame.Surface((size, size))
+                surface.fill(self.entities_data['plants']['grass']['color'])
+                self.selected_entity = {'type': 'grass', 'category': 'plants', 'surface': surface}
+        self.selected_entity_preview = [Image((SCREEN_WIDTH-64-20, SCREEN_HEIGHT-64-20), [self.components], self.selected_entity['surface'], (64, 64)), Text((SCREEN_WIDTH-64-10, SCREEN_HEIGHT-64-10), [self.components], self.selected_entity['type'], 14)]
+        
         # Create all sprites
         self.entities = pygame.sprite.Group()
         for entities_list in self.world.entities_dict.values():
@@ -110,15 +130,7 @@ class Interface:
                 self.grid_rects.append(rect)
         self.selected_rect = self.grid_rects[0]
 
-    def input(self):
-        keys = pygame.key.get_pressed()
-        current_time = pygame.time.get_ticks()
-
-        if current_time - self.keys_time >= 300:
-            if keys[pygame.K_SPACE]:
-                self.pause = not self.pause
- 
-    def grid(self): 
+    def grid(self):
         """ Display grid """
         for rect in self.grid_rects:
             if rect.collidepoint(self.mouse_pos):
@@ -126,45 +138,111 @@ class Interface:
                 pygame.draw.rect(self.screen, (100,100,100), rect, 1)
             else:
                 pygame.draw.rect(self.screen, (0,0,0), rect, 1)
- 
+
+        if self.mouse_input[0]:
+            print(self.selected_entity)
+            self.world.create_entity(self.mouse_pos_world, self.selected_entity['category'], self.entities_data[self.selected_entity['category']][self.selected_entity['type']])
+        if self.mouse_input[2]:
+            if self.world.getEntitiesAt(self.mouse_pos_world) != []:
+                entities = self.world.getEntitiesAt(self.mouse_pos_world)
+                
+                for entity in entities:
+                    entity.kill()
+
+    def generate_world(self):
+        self.world.entities_dict = {}
+
+        for category_name, category_data in self.entities_data.items():
+            print(category_name)
+            for entity_type in category_data:
+                print("--", entity_type)
+                self.world.generate(category_name, self.entities_data[category_name][entity_type])
+        
+    def reset_world(self):
+        self.world.entities_dict = {}
+        for category_data in self.entities_data.values():
+            for entity_type in category_data:
+                self.world.entities_dict[entity_type] = []
+        self.entities = pygame.sprite.Group()
+    
     def update(self):
         current_time = pygame.time.get_ticks()
 
-        if current_time - self.last_time >= 1000:
+        if current_time - self.last_time >= 1000 and self.world.entities_dict != {}:
             self.last_time = current_time
             
             self.world.iteration()
 
-            # Reset and create all sprites
+            # # Reset and create all sprites
             self.entities = pygame.sprite.Group()
             for entities_list in self.world.entities_dict.values():
                 for entity in entities_list:
-                    entity_sprite = EntitySprite(entity, [self.entities])
-                    self.entities.add(entity_sprite)
+                    EntitySprite(entity, [self.entities])
+    def update_tileset_panel_view(self):
+        """ Reset selected_entity_preview """
+        for component in self.selected_entity_preview:
+            component.delete()
+        self.selected_entity_preview = [Image((SCREEN_WIDTH-64-20, SCREEN_HEIGHT-64-20), [self.components], self.selected_entity['surface'], (64, 64)), Text((SCREEN_WIDTH-64-10, SCREEN_HEIGHT-64-10), [self.components], self.selected_entity['type'], 14)]
+    
+    def entities_panel_management(self):
+        for category in self.entities_buttons:
+            for index, button in enumerate(self.entities_buttons[category]):
+                if button.is_clicked:
+                    # Update selected tile
+                    print(category)
+                    for index_entity, entity in enumerate(self.entities_data[category]):
+                        if index_entity == index:
+                            entity_type = entity
+                            break
+                    self.selected_entity['type'] = entity_type
+                    self.selected_entity['category'] = category
+                    surface = pygame.Surface((10,10))
+                    surface.fill(self.entities_data[category][entity_type]['color'])
+                    self.selected_entity['surface'] = surface
+
+                    self.update_tileset_panel_view()
      
     def run(self): 
         while 1: 
             self.mouse_pos = pygame.mouse.get_pos()
+            self.mouse_input = pygame.mouse.get_pressed()
+            self.mouse_pos_world = (self.selected_rect.x // TILE_SIZE, self.selected_rect.y // TILE_SIZE)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE: # Pause
+                        self.pause = not self.pause
+                    if event.key == pygame.K_g: # Generate
+                        self.generate_world()
+                    if event.key == pygame.K_r: # Reset
+                        self.reset_world()
+                    if event.key == pygame.K_m: # Show components
+                        self.show_components = not self.show_components
  
             self.screen.fill((10, 10, 10))
  
             # Method
-            self.input()
             if not self.pause:
                 self.update()   
             self.grid() 
 
             # Display and update entities
             self.entities.draw(self.screen)
-            self.entities.update()
 
-            for sheep in self.world.entities_dict['sheep']:
-                pygame.draw.line(self.screen, (0, 255, 255), (sheep.pos[0]*TILE_SIZE+TILE_SIZE//2, sheep.pos[1]*TILE_SIZE+TILE_SIZE//2), (sheep.getAroundFood()[0]*TILE_SIZE+TILE_SIZE//2, sheep.getAroundFood()[1]*TILE_SIZE+TILE_SIZE//2), 4)
+            # Display components
+            if self.show_components:
+                self.entities.update()
+                
+                self.components.display()
+                self.entities_panel_management()
+
+            if self.world.entities_dict != {} and not self.pause:
+                if 'sheep' in self.world.entities_dict:
+                    for sheep in self.world.entities_dict['sheep']:
+                        pygame.draw.line(self.screen, (0, 255, 255), (sheep.pos[0]*TILE_SIZE+TILE_SIZE//2, sheep.pos[1]*TILE_SIZE+TILE_SIZE//2), (sheep.getAroundFood()[0]*TILE_SIZE+TILE_SIZE//2, sheep.getAroundFood()[1]*TILE_SIZE+TILE_SIZE//2), 4)
 
             # Debug
             debug((self.selected_rect.x / TILE_SIZE, self.selected_rect.y / TILE_SIZE))

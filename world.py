@@ -12,9 +12,7 @@ class World:
 
     Attributes
         dimentions : tuple
-        grass_list : list
-        wolf_list : list
-        sheep_list : list
+        entities_dict : dict
     """
     def __init__(self, dimensions):
         self.dimensions = dimensions
@@ -50,6 +48,37 @@ class World:
                 if entity.pos == position:
                     entities_in_pos.append(entity)
         return entities_in_pos
+
+    def create_entity(self, pos, category, entity_data):
+        entity_type = entity_data['type']
+
+        if self.getEntitiesAt(pos) == []:        
+            if category == 'plants':
+                self.entities_dict[entity_type].append(Grass(
+                        pos, 
+                        self, 
+                        choice(range(entity_data['food_amount'][0], entity_data['food_amount'][1]+1, 25)), 
+                        entity_data['growth_speed'],
+                        entity_data['color']
+                    ))
+            if category == 'mammals':
+                self.entities_dict[entity_type].append(Entity(
+                        entity_type, 
+                        pos, 
+                        self, 
+                        entity_data['color'], 
+                        entity_data['food_amount'], 
+                        entity_data['food_taken'],
+                        entity_data['energie_per_food_taken'],
+                        entity_data['food_type'], 
+                        entity_data['enemy_type'], 
+                        entity_data['reproduction_energie'], 
+                        entity_data['max_energie'], 
+                        tuple(entity_data['lose_energie']),
+                        randint(entity_data['start_energie'][0], entity_data['start_energie'][1]),
+                        entity_data['vision_range'],
+                        entity_data['vision_type']
+                    ))
 
     def generate(self, category, entity_data) -> None:
         """ Randomly generates entities from entity_data """

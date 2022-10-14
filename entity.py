@@ -1,4 +1,3 @@
-from html import entities
 from random import randint, choice
 
 
@@ -56,7 +55,6 @@ class Entity:
         if self.energie < self.max_energie:
             if self.world.getEntityAt(self.pos, self.food_type) != []:
                 entity = self.world.getEntityAt(self.pos, self.food_type)
-                print("GRAIL", entity.type, self.food_type)
                 if entity.food_amount > 0:
                     self.energie += (entity.food_amount * self.energie_per_food_taken) / self.food_taken
                     entity.food_amount -= self.food_taken
@@ -67,7 +65,9 @@ class Entity:
 
         # Movement
         self.getAroundFood()
-        print("---------", self.type, self.food_type, self.pos)
+        print("---------", self.max_side, self.type, self.food_type, self.pos, '->')
+        for side in self.sides:
+            print(self.sides[side]['pos'], '-', self.sides[side]['food_amount'])
         if self.energie > 0:
             if self.getAroundFood() != self.pos and not finished:
                 if 'right' in self.max_side:
@@ -100,47 +100,45 @@ class Entity:
             'down': {'pos': self.pos, 'food_amount': 0}
         }
 
-        for x in reversed(range(self.pos[0], self.pos[0]-self.vision_range)):
+        for x in reversed(range(self.pos[0], self.pos[0]+self.vision_range)):
             pos = (x, self.pos[1])
-            if self.world.getEntityAt(pos, self.food_type):
+            if self.world.getEntityAt(pos, self.food_type) != None:
                 entity = self.world.getEntityAt(pos, self.food_type)
                 self.sides['left']['pos'] = pos
                 self.sides['left']['food_amount'] = entity.food_amount
-                print(entity.food_amount)
+                break
 
-        for x in range(self.pos[0], self.pos[0]-self.vision_range):
+        for x in range(self.pos[0], self.pos[0]+self.vision_range):
             pos = (x, self.pos[1])
-            if self.world.getEntityAt(pos, self.food_type):
+            if self.world.getEntityAt(pos, self.food_type) != None:
                 entity = self.world.getEntityAt(pos, self.food_type)
                 self.sides['right']['pos'] = pos
                 self.sides['right']['food_amount'] = entity.food_amount
-                print(entity.food_amount)
+                break
 
-        for y in reversed(range(self.pos[1], self.pos[1]-self.vision_range)):
+        for y in reversed(range(self.pos[1], self.pos[1]+self.vision_range)):
             pos = (self.pos[0], y)
-            if self.world.getEntityAt(pos, self.food_type):
+            if self.world.getEntityAt(pos, self.food_type) != None:
                 entity = self.world.getEntityAt(pos, self.food_type)
                 self.sides['top']['pos'] = pos
                 self.sides['top']['food_amount'] = entity.food_amount
-                print(entity.food_amount)
+                break
         
-        for y in range(self.pos[0], self.pos[0]-self.vision_range):
+        for y in range(self.pos[0], self.pos[0]+self.vision_range):
             pos = (self.pos[0], y)
-            if self.world.getEntityAt(pos, self.food_type):
+            if self.world.getEntityAt(pos, self.food_type) != None:
                 entity = self.world.getEntityAt(pos, self.food_type)
                 self.sides['down']['pos'] = pos
                 self.sides['down']['food_amount'] = entity.food_amount
-                print(entity.food_amount)
+                break
 
         max_food_amount = max([self.sides[s]['food_amount'] for s in self.sides])
 
         for side in self.sides:
             if self.sides[side]['food_amount'] == max_food_amount:
                 max_side_pos = self.sides[side]['pos']
-
-        print(max_side_pos)
-
-        return max_side_pos
+        self.max_side = 'left'
+        return self.sides[self.max_side]['pos']
 
     def getColor(self):
         """ Return color at rgb (int, int, int) """
