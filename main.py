@@ -103,7 +103,6 @@ class Interface:
             category_data = self.entities_data[category]
             self.entities_buttons[category] = []
             for index_entity, entity_type in enumerate(category_data):
-                
                 size = 20
                 gap = 10
                 surface = pygame.Surface((size, size))
@@ -111,8 +110,8 @@ class Interface:
                 pos = (20+(gap+size)*index_entity, SCREEN_HEIGHT-20-((gap+size)*len(self.entities_data))+((gap+size)*index_category))
                 self.entities_buttons[category].append(ImageButton(pos, [self.components], surface))
                 surface = pygame.Surface((size, size))
-                surface.fill(self.entities_data['plants']['grass']['color'])
-                self.selected_entity = {'type': 'grass', 'category': 'plants', 'surface': surface}
+                surface.fill(self.entities_data['mammals']['sheep']['color'])
+                self.selected_entity = {'type': 'sheep', 'category': 'mammals', 'surface': surface}
         self.selected_entity_preview = [Image((SCREEN_WIDTH-64-20, SCREEN_HEIGHT-64-20), [self.components], self.selected_entity['surface'], (64, 64)), Text((SCREEN_WIDTH-64-10, SCREEN_HEIGHT-64-10), [self.components], self.selected_entity['type'], 14)]
         
         # Create all sprites
@@ -140,7 +139,6 @@ class Interface:
                 pygame.draw.rect(self.screen, (0,0,0), rect, 1)
 
         if self.mouse_input[0]:
-            print(self.selected_entity)
             self.world.create_entity(self.mouse_pos_world, self.selected_entity['category'], self.entities_data[self.selected_entity['category']][self.selected_entity['type']])
         if self.mouse_input[2]:
             if self.world.getEntitiesAt(self.mouse_pos_world) != []:
@@ -247,7 +245,8 @@ class Interface:
             # Debug
             debug((self.selected_rect.x / TILE_SIZE, self.selected_rect.y / TILE_SIZE))
             debug(f"{len(self.entities.sprites())} / {WORLD_WIDTH*WORLD_HEIGHT}", 30)
-            debug(f"pause {self.pause}", 50)
+            debug(f"{[e.type for e in self.world.getEntitiesAt(self.mouse_pos_world)]}", 50)
+            debug(f"pause {self.pause}", 70)
 
             pygame.display.update()
             self.clock.tick(30)

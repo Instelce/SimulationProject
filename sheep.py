@@ -1,9 +1,9 @@
 from random import randint
 
-from entity import Entity
+from entity import Mammal
 
 
-class Sheep(Entity):
+class Sheep(Mammal):
     """ Sheep
     ---
 

@@ -1,9 +1,8 @@
 from random import randint, choice
 
-from entity import Entity
+from plants import Plant
+from mammal import Mammal
 from grass import Grass
-from sheep import Sheep
-from wolf import Wolf
 
 
 class World:
@@ -33,12 +32,10 @@ class World:
         return None
 
     def getEntityAt(self, position, entity_type):
-        """ Returns list of entities type at position """
-        entity = None
         for entity in self.entities_dict.get(entity_type):
             if entity.pos == position and entity_type == entity.type:
-                entity = entity
-        return entity
+                return entity
+        return None
 
     def getEntitiesAt(self, position) -> list:
         """ Returns list of entities at position """
@@ -51,18 +48,21 @@ class World:
 
     def create_entity(self, pos, category, entity_data):
         entity_type = entity_data['type']
+        print(entity_type)
 
         if self.getEntitiesAt(pos) == []:        
             if category == 'plants':
-                self.entities_dict[entity_type].append(Grass(
+                self.entities_dict[entity_type].append(Plant(
+                        entity_type,
                         pos, 
                         self, 
+                        entity_data['color'],
                         choice(range(entity_data['food_amount'][0], entity_data['food_amount'][1]+1, 25)), 
                         entity_data['growth_speed'],
-                        entity_data['color']
+                        entity_data['max_regrowth']
                     ))
             if category == 'mammals':
-                self.entities_dict[entity_type].append(Entity(
+                self.entities_dict[entity_type].append(Mammal(
                         entity_type, 
                         pos, 
                         self, 
@@ -84,19 +84,23 @@ class World:
         """ Randomly generates entities from entity_data """
         entity_type = entity_data['type']
         self.entities_dict[entity_type] = []
+
+        # Loop dimentions
         for x in range(self.dimensions[0]):
             for y in range(self.dimensions[1]):
                 if randint(0, 1000) <= int(entity_data['generate_percentage']*10): # Can generate
                     if category == 'plants':
-                        self.entities_dict[entity_type].append(Grass(
+                        self.entities_dict[entity_type].append(Plant(
+                                entity_type,
                                 (x,y), 
                                 self, 
+                                entity_data['color'],
                                 choice(range(entity_data['food_amount'][0], entity_data['food_amount'][1]+1, 25)), 
                                 entity_data['growth_speed'],
-                                entity_data['color']
+                                entity_data['max_regrowth']
                             ))
                     if category == 'mammals':
-                        self.entities_dict[entity_type].append(Entity(
+                        self.entities_dict[entity_type].append(Mammal(
                                 entity_type, 
                                 (x,y), 
                                 self, 
