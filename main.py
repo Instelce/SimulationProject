@@ -52,10 +52,12 @@ class EntitySprite(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect(topleft=(self.entity.pos[0]*TILE_SIZE, self.entity.pos[1]*TILE_SIZE))
 
-        if self.entity.type != 'grass':
-            self.energie_rect = pygame.Rect(self.rect.left, self.rect.top, TILE_SIZE, 5)
+        if self.entity.category == 'mammals':
+            self.energie_rect = pygame.Rect(self.rect.left, self.rect.top, TILE_SIZE, 2)
+            self.genre_text_surf = get_font(10).render(self.entity.genre[0].upper(), True, (255,255,225))
+            self.genre_text_rect = self.genre_text_surf.get_rect(bottomleft=(self.rect.bottomleft[0] + 4, self.rect.bottomleft[1] - 4))
 
-        if self.entity.type == 'grass':
+        if self.entity.category == 'plants':
             self.amount_text_surf = get_font(10).render(str(self.entity.food_amount), True, (255,255,255))
             self.amount_text_rect = self.amount_text_surf.get_rect(topleft=self.rect.center)
 
@@ -65,12 +67,17 @@ class EntitySprite(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect(topleft=(self.entity.pos[0]*TILE_SIZE, self.entity.pos[1]*TILE_SIZE))
 
-        if self.entity.type == 'grass': 
+        if self.entity.category == 'mammals':
+            if self.entity.can_reproduction:
+                pygame.draw.rect(self.display_surface, (255, 40, 40), self.rect.copy(), 2)
+                
+            show_bar(self.entity.energie, self.entity.max_energie, self.energie_rect, (250, 140, 45))
+            self.display_surface.blit(self.genre_text_surf, self.genre_text_rect)
+
+
+        if self.entity.category == 'plants': 
             self.display_surface.blit(self.amount_text_surf, self.amount_text_rect)
-        if self.entity.type != 'grass': 
-            self.energie_rect = pygame.Rect(self.rect.left, self.rect.top, TILE_SIZE, 5)
-            show_bar(self.entity.energie, self.entity.max_energie, self.energie_rect, (250, 220, 45))
-    
+     
 
 class Interface:
     def __init__(self) -> None:
@@ -139,7 +146,7 @@ class Interface:
                 pygame.draw.rect(self.screen, (0,0,0), rect, 1)
 
         if self.mouse_input[0]:
-            self.world.create_entity(self.mouse_pos_world, self.selected_entity['category'], self.entities_data[self.selected_entity['category']][self.selected_entity['type']])
+            self.world.createEntity(self.mouse_pos_world, self.selected_entity['category'], self.entities_data[self.selected_entity['category']][self.selected_entity['type']])
         if self.mouse_input[2]:
             if self.world.getEntitiesAt(self.mouse_pos_world) != []:
                 entities = self.world.getEntitiesAt(self.mouse_pos_world)
@@ -176,6 +183,7 @@ class Interface:
             for entities_list in self.world.entities_dict.values():
                 for entity in entities_list:
                     EntitySprite(entity, [self.entities])
+
     def update_tileset_panel_view(self):
         """ Reset selected_entity_preview """
         for component in self.selected_entity_preview:
@@ -238,9 +246,17 @@ class Interface:
                 self.entities_panel_management()
 
             if self.world.entities_dict != {} and not self.pause:
-                if 'sheep' in self.world.entities_dict:
-                    for sheep in self.world.entities_dict['sheep']:
-                        pygame.draw.line(self.screen, (0, 255, 255), (sheep.pos[0]*TILE_SIZE+TILE_SIZE//2, sheep.pos[1]*TILE_SIZE+TILE_SIZE//2), (sheep.getAroundFood()[0]*TILE_SIZE+TILE_SIZE//2, sheep.getAroundFood()[1]*TILE_SIZE+TILE_SIZE//2), 4)
+                for entities_list in self.world.entities_dict.values():
+                    for entity in entities_list:
+                        if entity.category == 'mammals':
+                            pygame.draw.circle(self.screen, entity.color, (entity.getAroundFood()[0]*TILE_SIZE+TILE_SIZE//2, entity.getAroundFood()[1]*TILE_SIZE+TILE_SIZE//2), 4)
+                            pygame.draw.line(self.screen, entity.color, (entity.pos[0]*TILE_SIZE+TILE_SIZE//2, entity.pos[1]*TILE_SIZE+TILE_SIZE//2), (entity.getAroundFood()[0]*TILE_SIZE+TILE_SIZE//2, entity.getAroundFood()[1]*TILE_SIZE+TILE_SIZE//2), 1)
+
+                            if len(self.world.entities_dict[entity.type]) >= 2 and entity.getAroundPartner() != None:
+                                pygame.draw.circle(self.screen, entity.color, (entity.getAroundPartner().pos[0]*TILE_SIZE+TILE_SIZE//2, entity.getAroundPartner().pos[1]*TILE_SIZE+TILE_SIZE//2), 4)
+                                pygame.draw.line(self.screen, entity.color, (entity.pos[0]*TILE_SIZE+TILE_SIZE//2, entity.pos[1]*TILE_SIZE+TILE_SIZE//2), (entity.getAroundPartner().pos[0]*TILE_SIZE+TILE_SIZE//2, entity.getAroundPartner().pos[1]*TILE_SIZE+TILE_SIZE//2), 2)
+
+
 
             # Debug
             debug((self.selected_rect.x / TILE_SIZE, self.selected_rect.y / TILE_SIZE))

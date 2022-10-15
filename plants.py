@@ -33,6 +33,10 @@ class Plant(Entity):
         if self.food_amount < self.max_regrowth:
             self.food_amount += self.growth_speed
             self.color = (self.color_base[0], self.color_base[1]-self.food_amount, self.color_base[2])
+        
+        # Kill
+        if self.food_amount <= 0:
+            self.kill()
 
         # Increse full_since if grass food_amount is full
         if self.food_amount >= self.max_regrowth:
@@ -51,5 +55,5 @@ class Plant(Entity):
                     all_grass_pos.remove(pos)
             
             if len(all_grass_pos) > 0 and new_grass_pos != None:
-                self.world.entities_dict['grass'].append(Plant(self.type, new_grass_pos, self.world, self.color_base, 5, self.growth_speed, self.max_regrowth))
+                self.world.entities_dict[self.type].append(Plant(self.type, new_grass_pos, self.world, self.color_base, 5, self.growth_speed, self.max_regrowth))
 

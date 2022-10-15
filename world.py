@@ -37,16 +37,21 @@ class World:
                 return entity
         return None
 
-    def getEntitiesAt(self, position) -> list:
+    def getEntitiesAt(self, position, ban_type="") -> list:
         """ Returns list of entities at position """
         entities_in_pos = []
         for entities_list in self.entities_dict.values():
-            for entity in entities_list:
-                if entity.pos == position:
-                    entities_in_pos.append(entity)
+            if ban_type == "":
+                for entity in entities_list:
+                    if entity.pos == position:
+                        entities_in_pos.append(entity)
+            else:
+                for entity in entities_list:
+                    if entity.pos == position and entity.type != ban_type:
+                        entities_in_pos.append(entity)
         return entities_in_pos
 
-    def create_entity(self, pos, category, entity_data):
+    def createEntity(self, pos, category, entity_data):
         entity_type = entity_data['type']
         print(entity_type)
 
@@ -68,8 +73,8 @@ class World:
                         self, 
                         entity_data['color'], 
                         entity_data['food_amount'], 
-                        entity_data['food_taken'],
                         entity_data['energie_per_food_taken'],
+                        entity_data['food_taken'],
                         entity_data['food_type'], 
                         entity_data['enemy_type'], 
                         entity_data['reproduction_energie'], 
@@ -77,7 +82,8 @@ class World:
                         tuple(entity_data['lose_energie']),
                         randint(entity_data['start_energie'][0], entity_data['start_energie'][1]),
                         entity_data['vision_range'],
-                        entity_data['vision_type']
+                        entity_data['vision_type'],
+                        choice(['male', 'female'])
                     ))
 
     def generate(self, category, entity_data) -> None:
@@ -115,7 +121,8 @@ class World:
                                 tuple(entity_data['lose_energie']),
                                 randint(entity_data['start_energie'][0], entity_data['start_energie'][1]),
                                 entity_data['vision_range'],
-                                entity_data['vision_type']
+                                entity_data['vision_type'],
+                                choice(['male', 'female'])
                             ))
                         
 
