@@ -2,7 +2,6 @@ from random import randint, choice
 
 from plants import Plant
 from mammal import Mammal
-from grass import Grass
 
 
 class World:
@@ -12,46 +11,62 @@ class World:
     Attributes
         dimentions : tuple
         entities_dict : dict
+        time : list
     """
     def __init__(self, dimensions):
         self.dimensions = dimensions
 
         self.entities_dict = {} # contains all entity lists
+        self.time = [0, 0] # Hours, minutes
 
     def iteration(self) -> None: 
         """ Iteration of world""" 
         for entity_list in self.entities_dict.values():
             for entity in entity_list:
                 entity.action()
-
-    def getGrassAt(self, position) -> Grass or None:
-        """ Return None or Grass object """ 
-        for grass in self.entities_dict['grass']: 
-            if grass.pos == position:
-                return grass
-        return None
-
+        
+        self.time[1] += 1
+        if self.time[1] == 60:
+            self.time[0] += 1
+            self.time[1] = 0
+        
     def getEntityAt(self, position, entity_type):
+        """ Return Entity with specific type of None"""
         for entity in self.entities_dict.get(entity_type):
             if entity.pos == position and entity_type == entity.type:
                 return entity
         return None
 
-    def getEntitiesAt(self, position, ban_type="") -> list:
-        """ Returns list of entities at position """
+    def getEntitiesAt(self, position, ban_type="", ban_category="") -> list:
+        """ Returns list of entities at position 
+        
+        if ban_type is not "" ban all entities with the type of ban_type
+        """
         entities_in_pos = []
         for entities_list in self.entities_dict.values():
-            if ban_type == "":
-                for entity in entities_list:
-                    if entity.pos == position:
-                        entities_in_pos.append(entity)
+            if ban_category == "":
+                if ban_type == "":
+                    for entity in entities_list:
+                        if entity.pos == position:
+                            entities_in_pos.append(entity)
+                else:
+                    for entity in entities_list:
+                        if entity.pos == position and entity.type != ban_type:
+                            entities_in_pos.append(entity)
             else:
-                for entity in entities_list:
-                    if entity.pos == position and entity.type != ban_type:
-                        entities_in_pos.append(entity)
+                if ban_type == "":
+                    for entity in entities_list:
+                        if entity.pos == position and entity.category != ban_category:
+                            entities_in_pos.append(entity)
+                else:
+                    for entity in entities_list:
+                        if entity.pos == position and entity.type != ban_type and entity.category != ban_category:
+                            entities_in_pos.append(entity)
+
         return entities_in_pos
 
     def createEntity(self, pos, category, entity_data):
+        """ Create Entity"""
         entity_type = entity_data['type']
         print(entity_type)
 
@@ -87,7 +102,7 @@ class World:
                     ))
 
     def generate(self, category, entity_data) -> None:
-        """ Randomly generates entities from entity_data """
+        """ Randomly generates entities from entity_data dict """
         entity_type = entity_data['type']
         self.entities_dict[entity_type] = []
 

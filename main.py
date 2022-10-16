@@ -70,7 +70,7 @@ class EntitySprite(pygame.sprite.Sprite):
         if self.entity.category == 'mammals':
             if self.entity.can_reproduction:
                 pygame.draw.rect(self.display_surface, (255, 40, 40), self.rect.copy(), 2)
-                
+
             show_bar(self.entity.energie, self.entity.max_energie, self.energie_rect, (250, 140, 45))
             self.display_surface.blit(self.genre_text_surf, self.genre_text_rect)
 
@@ -256,13 +256,16 @@ class Interface:
                                 pygame.draw.circle(self.screen, entity.color, (entity.getAroundPartner().pos[0]*TILE_SIZE+TILE_SIZE//2, entity.getAroundPartner().pos[1]*TILE_SIZE+TILE_SIZE//2), 4)
                                 pygame.draw.line(self.screen, entity.color, (entity.pos[0]*TILE_SIZE+TILE_SIZE//2, entity.pos[1]*TILE_SIZE+TILE_SIZE//2), (entity.getAroundPartner().pos[0]*TILE_SIZE+TILE_SIZE//2, entity.getAroundPartner().pos[1]*TILE_SIZE+TILE_SIZE//2), 2)
 
-
-
             # Debug
             debug((self.selected_rect.x / TILE_SIZE, self.selected_rect.y / TILE_SIZE))
             debug(f"{len(self.entities.sprites())} / {WORLD_WIDTH*WORLD_HEIGHT}", 30)
             debug(f"{[e.type for e in self.world.getEntitiesAt(self.mouse_pos_world)]}", 50)
             debug(f"pause {self.pause}", 70)
+            debug(f"{self.world.time[0]} h {self.world.time[1]} min", 90)
+            debug(f"{[e.type for e in self.world.getEntitiesAt(self.mouse_pos_world, '', 'plants')]}", 110)
+
+            # for index, list_type in enumerate(self.world.entities_dict):
+            #     debug(f"{list_type} : {len(self.world.entities_dict[list_type])}", 130+(20*index))
 
             pygame.display.update()
             self.clock.tick(30)

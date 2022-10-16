@@ -49,7 +49,7 @@ class Plant(Entity):
             all_grass_pos = [(self.pos[0]-1, self.pos[1]), (self.pos[0]+1, self.pos[1]), (self.pos[0], self.pos[1]+1), (self.pos[0], self.pos[1]-1)]
             new_grass_pos = None
             for pos in all_grass_pos:
-                if self.world.getGrassAt(pos) == None:
+                if self.world.getEntityAt(pos, self.type) == None:
                     new_grass_pos = pos
                 else:
                     all_grass_pos.remove(pos)
