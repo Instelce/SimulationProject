@@ -40,28 +40,13 @@ class World:
     def getEntitiesAt(self, position, ban_type="", ban_category="") -> list:
         """ Returns list of entities at position 
         
-        if ban_type is not "" ban all entities with the type of ban_type
+        if ban_type is not "" ban all entities with the type of ban_type; same as ban_category
         """
         entities_in_pos = []
         for entities_list in self.entities_dict.values():
-            if ban_category == "":
-                if ban_type == "":
-                    for entity in entities_list:
-                        if entity.pos == position:
-                            entities_in_pos.append(entity)
-                else:
-                    for entity in entities_list:
-                        if entity.pos == position and entity.type != ban_type:
-                            entities_in_pos.append(entity)
-            else:
-                if ban_type == "":
-                    for entity in entities_list:
-                        if entity.pos == position and entity.category != ban_category:
-                            entities_in_pos.append(entity)
-                else:
-                    for entity in entities_list:
-                        if entity.pos == position and entity.type != ban_type and entity.category != ban_category:
-                            entities_in_pos.append(entity)
+            for entity in entities_list:
+                if entity.pos == position and entity.type != ban_type and entity.category != ban_category:
+                    entities_in_pos.append(entity)
 
         return entities_in_pos
 
