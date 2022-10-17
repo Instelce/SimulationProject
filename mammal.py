@@ -30,11 +30,12 @@ class Mammal(Entity):
 
         genre : str - 'female' or 'male'
    """
-    def __init__(self, type, pos, world, color, food_amount, energie_per_food_taken, food_taken, food_type, enemy_type, reproduction_energie, max_energie, lose_energie, energie, vision_range, vision_type, genre) -> None:
+    def __init__(self, type, pos, world, color, food_amount, food_taken, food_regime, energie_per_food_taken, food_type, enemy_type, reproduction_energie, max_energie, lose_energie, energie, start_energie, vision_range, vision_type, genre) -> None:
         super().__init__(type, pos, world, color)
         self.category = 'mammals'
         self.food_amount = food_amount
         self.food_taken = food_taken
+        self.food_regime = food_regime
         self.energie_per_food_taken = energie_per_food_taken
 
         self.food_type = food_type
@@ -44,6 +45,7 @@ class Mammal(Entity):
         self.max_energie = max_energie
         self.lose_energie = lose_energie
         self.energie = energie
+        self.start_energie = start_energie
 
         self.vision_range = vision_range
         self.vision_type = vision_type
@@ -97,7 +99,7 @@ class Mammal(Entity):
                     direction = (0, int(copysign(1, -y_move)))
 
                 self.pos = (self.pos[0] + direction[0], self.pos[1] + direction[1])
-                # self.loseEnergie('movement')
+                self.loseEnergie('movement')
                 finished = True
 
             # Reproduction
@@ -106,7 +108,7 @@ class Mammal(Entity):
                     if self.world.getEntityAt(pos, self.type) == None and closer_partner.energie > closer_partner.reproduction_energie:
                         self.loseEnergie('reproduction')
                         if self.genre == 'female':
-                            self.world.entities_dict[self.type].append(Mammal(self.type, pos, self.world, self.color, self.food_amount, self.energie_per_food_taken, self.food_taken, self.food_type, self.enemy_type, self.reproduction_energie, self.max_energie, self.lose_energie, 40, self.vision_range, self.vision_type, choice(['female', 'male'])))
+                            self.world.createEntity(pos, self.category, self.__dict__)
                         finished = True
                         break
 
@@ -129,22 +131,21 @@ class Mammal(Entity):
                     self.pos = pos
 
                     print("MOVE TO", pos)
-                    # self.loseEnergie('movement')
+                    self.loseEnergie('movement')
                     finished = True
             else:
                 random_pos = choice([(self.pos[0] + randint(-1, 1), self.pos[1]), (self.pos[0], self.pos[1] + randint(-1, 1))])
 
-                if 0 < random_pos[0] < self.world.dimensions[0] and 0 < random_pos[1] < self.world.dimensions[1]:
-                    while self.world.getEntitiesAt(random_pos, self.food_type, "plants") != []:
-                        random_pos = choice([(self.pos[0] + randint(-1, 1), self.pos[1]), (self.pos[0], self.pos[1] + randint(-1, 1))])
+                while self.world.getEntitiesAt(random_pos, self.food_type, "plants") != [] and 0 < random_pos[0] < self.world.dimensions[0]-1 and 0 < random_pos[1] < self.world.dimensions[1]-1:
+                    random_pos = choice([(self.pos[0] + randint(-1, 1), self.pos[1]), (self.pos[0], self.pos[1] + randint(-1, 1))])
                     
                 self.pos = random_pos
 
                 print("RANDOM MOVE TO", random_pos)
-                # self.loseEnergie('movement')
+                self.loseEnergie('movement')
                 finished = True
         
-        if self.energie <= 0:
+        if self.energie <= 0 or 0 > self.pos[0] or self.pos[0] > self.world.dimensions[0]-1 or 0 > self.pos[1] or self.pos[1] > self.world.dimensions[1]-1:
             self.kill()
 
     def getAroundFood(self) -> tuple:

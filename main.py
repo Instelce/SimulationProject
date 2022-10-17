@@ -50,42 +50,45 @@ class EntitySprite(pygame.sprite.Sprite):
 
         self.display_surface = pygame.display.get_surface()
 
-        self.image = pygame.Surface((TILE_SIZE, TILE_SIZE))
-        self.image.fill(self.entity.getColor())
-
-        self.rect = self.image.get_rect(topleft=(self.entity.pos[0]*TILE_SIZE, self.entity.pos[1]*TILE_SIZE))
-
         if self.entity.category == 'mammals':
-            self.energie_rect = pygame.Rect(self.rect.left, self.rect.top, TILE_SIZE, 2)
-            self.genre_text_surf = get_font(10).render(self.entity.genre[0].upper(), True, (255,255,225))
-            self.genre_text_rect = self.genre_text_surf.get_rect(bottomleft=(self.rect.bottomleft[0] + 4, self.rect.bottomleft[1] - 4))
+            self.image = pygame.Surface((TILE_SIZE-10, TILE_SIZE-10))
+            self.image.fill(self.entity.getColor())
 
-        if self.entity.category == 'plants':
-            self.amount_text_surf = get_font(10).render(str(self.entity.food_amount), True, (255,255,255))
-            self.amount_text_rect = self.amount_text_surf.get_rect(bottomright=(self.rect.bottomright[0] - 4, self.rect.bottomright[1] - 4))
+            self.rect = self.image.get_rect(topleft=(self.entity.pos[0]*TILE_SIZE + 5, self.entity.pos[1]*TILE_SIZE + 5))
+        elif self.entity.category == 'plants':
+            self.image = pygame.Surface((TILE_SIZE, TILE_SIZE))
+            self.image.fill(self.entity.getColor())
+
+            self.rect = self.image.get_rect(topleft=(self.entity.pos[0]*TILE_SIZE, self.entity.pos[1]*TILE_SIZE))
 
     def update(self):
-        self.image = pygame.Surface((TILE_SIZE, TILE_SIZE))
-        self.image.fill(self.entity.getColor())
-
-        self.rect = self.image.get_rect(topleft=(self.entity.pos[0]*TILE_SIZE, self.entity.pos[1]*TILE_SIZE))
-
         if self.entity.category == 'mammals':
             if self.entity.can_reproduction:
                 pygame.draw.rect(self.display_surface, (255, 40, 40), self.rect.copy(), 2)
 
-            show_bar(self.entity.energie, self.entity.max_energie, self.energie_rect, (250, 140, 45))
-            self.display_surface.blit(self.genre_text_surf, self.genre_text_rect)
-
+            # Energie bar
+            energie_rect = pygame.Rect(self.rect.left, self.rect.top, self.rect.width, 2)
+            show_bar(self.entity.energie, self.entity.max_energie, energie_rect, (250, 140, 45))
+            
+            # Genre lettre
+            genre_text_surf = get_font(8).render(self.entity.genre[0].upper(), True, (255,255,225))
+            genre_text_rect = genre_text_surf.get_rect(bottomleft=(self.rect.bottomleft[0] + 4, self.rect.bottomleft[1] - 4))
+            self.display_surface.blit(genre_text_surf, genre_text_rect)
+            
+            # Line for food
             pygame.draw.circle(self.display_surface, self.entity.color, (self.entity.getAroundFood()[0]*TILE_SIZE+TILE_SIZE//2, self.entity.getAroundFood()[1]*TILE_SIZE+TILE_SIZE//2), 4)
             pygame.draw.line(self.display_surface, self.entity.color, (self.entity.pos[0]*TILE_SIZE+TILE_SIZE//2, self.entity.pos[1]*TILE_SIZE+TILE_SIZE//2), (self.entity.getAroundFood()[0]*TILE_SIZE+TILE_SIZE//2, self.entity.getAroundFood()[1]*TILE_SIZE+TILE_SIZE//2), 1)
 
+            # Line for nearest partner
             if len(self.entity.world.entities_dict[self.entity.type]) >= 2 and self.entity.getAroundPartner() != None:
                 pygame.draw.circle(self.display_surface, self.entity.color, (self.entity.getAroundPartner().pos[0]*TILE_SIZE+TILE_SIZE//2, self.entity.getAroundPartner().pos[1]*TILE_SIZE+TILE_SIZE//2), 4)
                 pygame.draw.line(self.display_surface, self.entity.color, (self.entity.pos[0]*TILE_SIZE+TILE_SIZE//2, self.entity.pos[1]*TILE_SIZE+TILE_SIZE//2), (self.entity.getAroundPartner().pos[0]*TILE_SIZE+TILE_SIZE//2, self.entity.getAroundPartner().pos[1]*TILE_SIZE+TILE_SIZE//2), 2)
 
-        if self.entity.category == 'plants': 
-            self.display_surface.blit(self.amount_text_surf, self.amount_text_rect)
+        if self.entity.category == 'plants':
+            # Food amount text
+            amount_text_surf = get_font(10).render(str(self.entity.food_amount), True, (255,255,255))
+            amount_text_rect = amount_text_surf.get_rect(bottomright=(self.rect.bottomright[0] - 4, self.rect.bottomright[1] - 4))
+            self.display_surface.blit(amount_text_surf, amount_text_rect)
 
 
 class Interface:

@@ -13,10 +13,9 @@ class Plant(Entity):
         pos : tuple
         world : World
         growth_speed : int
-        max_regrowth : int - 100
-        food_amount : int - 25, 50, 75, 100
-        color_base : int - (52, 140, 49)
-        color_mod : (int, int, int) - rgb color
+        max_regrowth : int
+        food_amount : int
+        color_base : int
         full_since : int
     """
     def __init__(self, type, pos, world, color, food_amount, growth_speed, max_regrowth) -> None:
@@ -26,6 +25,7 @@ class Plant(Entity):
         self.growth_speed = growth_speed
         self.max_regrowth = max_regrowth
         self.food_amount = food_amount
+        self.color = (self.color_base[0], self.color_base[1]-self.food_amount, self.color_base[2])
         self.full_since = 0
 
     def action(self) -> None:
