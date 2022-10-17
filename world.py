@@ -85,6 +85,7 @@ class World:
                         entity_data['start_energie'],
                         entity_data['vision_range'],
                         entity_data['vision_type'],
+                        entity_data['speed'],
                         choice(['male', 'female'])
                     ))
 

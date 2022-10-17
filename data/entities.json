@@ -14,7 +14,7 @@
         "sheep": {
             "type": "sheep",
             "color": [100, 100, 100],
-            "food_amount": 150,
+            "food_amount": 160,
             "food_taken": 50,
             "food_regime": "herbivore",
             "energie_per_food_taken": 20,
@@ -26,8 +26,9 @@
             "start_energie": [80, 130],
             "vision_range": 4,
             "vision_type": "restricted",
+            "speed": 1,
 
-            "generate_percentage": 1
+            "generate_percentage": 2
         },
         "wolf": {
             "type": "wolf",
@@ -35,15 +36,16 @@
             "food_amount": 50,
             "food_taken": 50,
             "food_regime": "carnivore",
-            "energie_per_food_taken": 20,
+            "energie_per_food_taken": 50,
             "food_type": "sheep",
             "enemy_type": "",
             "reproduction_energie": 100,
             "max_energie": 300,
             "lose_energie": [10, 20],
-            "start_energie": [80, 130],
+            "start_energie": [100, 200],
             "vision_range": 8,
             "vision_type": "large",
+            "speed": 1,
 
             "generate_percentage": 0.5
         }

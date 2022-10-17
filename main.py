@@ -46,6 +46,7 @@ class EntitySprite(pygame.sprite.Sprite):
     def __init__(self, entity, entity_index, groups) -> None:
         super().__init__(groups)
         self.entity = entity
+        self.max_food_amount = entity.food_amount
         self.entity_index = entity_index
 
         self.display_surface = pygame.display.get_surface()
@@ -69,6 +70,10 @@ class EntitySprite(pygame.sprite.Sprite):
             # Energie bar
             energie_rect = pygame.Rect(self.rect.left, self.rect.top, self.rect.width, 2)
             show_bar(self.entity.energie, self.entity.max_energie, energie_rect, (250, 140, 45))
+
+            # Health bar
+            health_rect = pygame.Rect(self.rect.left, self.rect.top + 2, self.rect.width, 2)
+            show_bar(self.entity.food_amount, self.max_food_amount, health_rect, (255, 60, 50))
             
             # Genre lettre
             genre_text_surf = get_font(8).render(self.entity.genre[0].upper(), True, (255,255,225))
@@ -153,6 +158,9 @@ class Interface:
             else:
                 pygame.draw.rect(self.screen, (30, 25, 25), rect, 1)
 
+    def get_click(self):
+        # for component in self.components.components:
+            # if component.re
         if self.mouse_input[0]:
             self.world.createEntity(self.mouse_pos_world, self.selected_entity['category'], self.entities_data[self.selected_entity['category']][self.selected_entity['type']])
         if self.mouse_input[2]:
@@ -241,7 +249,8 @@ class Interface:
             # Method
             if not self.pause:
                 self.update()   
-            self.grid() 
+            self.grid()
+            self.get_click()
 
             # Display entities
             self.entities.draw(self.screen)
