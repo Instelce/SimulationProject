@@ -69,10 +69,11 @@ class World:
             if category == 'mammals':
                 self.entities_dict[entity_type].append(Mammal(
                         entity_type, 
-                        pos, 
-                        self, 
+                        pos,
+                        self,
                         entity_data['color'], 
                         entity_data['food_amount'], 
+                        entity_data['max_food_amount'], 
                         entity_data['food_taken'],
                         entity_data['food_regime'],
                         entity_data['energie_per_food_taken'],

@@ -14,7 +14,8 @@ class Mammal(Entity):
         pos : tuple
         world : World
         color : tuple
-        food_amount : int
+        food_amount : int - health
+        max_food_amount : int - max health
         food_regime : str - "carnivore" or "herbivore"
         food_taken : int - food that the mammal takes per mouthful
 
@@ -32,10 +33,12 @@ class Mammal(Entity):
 
         genre : str - "female" or "male"
    """
-    def __init__(self, type, pos, world, color, food_amount, food_taken, food_regime, energie_per_food_taken, food_type, enemy_type, reproduction_energie, max_energie, lose_energie, energie, start_energie, vision_range, vision_type, speed, genre) -> None:
+    def __init__(self, type, pos, world, color, food_amount, max_food_amount, food_taken, food_regime, energie_per_food_taken, food_type, enemy_type, reproduction_energie, max_energie, lose_energie, energie, start_energie, vision_range, vision_type, speed, genre) -> None:
         super().__init__(type, pos, world, color)
         self.category = 'mammals'
+
         self.food_amount = food_amount
+        self.max_food_amount = max_food_amount
         self.food_taken = food_taken
         self.food_regime = food_regime
         self.energie_per_food_taken = energie_per_food_taken
@@ -61,6 +64,8 @@ class Mammal(Entity):
 
     def action(self):
         """ Actions : food, movement, escape, reproduction """
+
+        # Set target food pos
         if self.target_food_pos == None:
             self.target_food_pos = self.getAroundFood()
         if self.food_regime == 'herbivore':
@@ -74,6 +79,10 @@ class Mammal(Entity):
             (self.pos[0], self.pos[1] - 1), # top
             (self.pos[0], self.pos[1] + 1), # down
         ]
+
+        # Heal
+        if self.energie > self.energie - (self.energie // 4) and self.food_amount <= self.max_food_amount:
+            self.food_amount += 5
 
         # Food
         if self.energie + self.energie_per_food_taken < self.max_energie:
@@ -185,11 +194,16 @@ class Mammal(Entity):
                 self.loseEnergie('movement')
                 finished = True
         
-        if self.energie <= 0 or self.food_amount <= 0 or 0 > self.pos[0] or self.pos[0] > self.world.dimensions[0]-1 or 0 > self.pos[1] or self.pos[1] > self.world.dimensions[1]-1:
+        if self.energie <= 0:
+            self.food_amount -= 20
+
+        # Kill entity
+        if self.food_amount <= 0 or 0 > self.pos[0] or self.pos[0] > self.world.dimensions[0]-1 or 0 > self.pos[1] or self.pos[1] > self.world.dimensions[1]-1:
             self.kill()
 
     def getAroundFood(self) -> tuple:
         """ Return the direction to go to the nearest food """
+
         # Large vision
         if self.vision_type == 'large':
             closer_entity = None
@@ -199,13 +213,14 @@ class Mammal(Entity):
                 if entity.pos != self.pos and self.pos[0] - self.vision_range < entity.pos[0] < self.pos[0] + self.vision_range and self.pos[1] - self.vision_range < entity.pos[1] < self.pos[1] + self.vision_range:
                     # Calculate the distance
                     distance = abs(self.pos[0]-entity.pos[0]) + abs(self.pos[1]-entity.pos[1])
+
                     if closer_entity == None:
                         closer_entity = entity
                         closer_distance = distance
                     elif distance < closer_distance: # Get nearest food
                         closer_entity = entity
                         closer_distance = distance
-
+            
             if closer_entity != None:
                 pos = closer_entity.pos
             else:
@@ -267,6 +282,7 @@ class Mammal(Entity):
             return pos
     
     def getAroundPartner(self) -> Entity:
+        """ Return the nearest entity according to gender and type """
         closer_partner = None
         closer_distance = 0
 
@@ -286,7 +302,7 @@ class Mammal(Entity):
         return closer_partner 
 
     def loseEnergie(self, action) -> None:
-        """ Dicrease energie """
+        """ Dicrease energie depending on the action """
         if action == 'movement':
             self.energie -= choice(self.lose_energie)
         elif action == 'reproduction':

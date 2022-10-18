@@ -29,6 +29,7 @@ class Plant(Entity):
         self.full_since = 0
 
     def action(self) -> None:
+        """ Actions of plants : grow, spread """
         # Grow
         if self.food_amount < self.max_regrowth:
             self.food_amount += self.growth_speed

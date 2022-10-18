@@ -317,6 +317,7 @@ class ImageButton(Component):
         self.color = color if color is not None else (255,255,255)
 
         self.border = pygame.Rect(self.pos[0], self.pos[1], self.image.get_size()[0]+5, self.image.get_size()[1]+5)
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], self.image.get_size()[0], self.image.get_size()[1])
         self.size = (self.border.width, self.border.height)
 
         # Interactions
