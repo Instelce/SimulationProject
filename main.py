@@ -9,12 +9,13 @@ from debug import debug
 
 
 # Methods
-def get_font(font_size):
+def get_font(font_size) -> pygame.font.SysFont:
+    """ Return pygame Font object """
     return pygame.font.SysFont('Calibri', font_size) 
 
 
 def show_bar(current, max_amount, bg_rect, color):
-    """ Display bar """
+    """ Display bar depending on current value """
     display_surface = pygame.display.get_surface()
 
     # display bg_rect

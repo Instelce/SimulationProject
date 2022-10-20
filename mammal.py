@@ -80,12 +80,9 @@ class Mammal(Entity):
             (self.pos[0], self.pos[1] + 1), # down
         ]
 
-        # Heal
-        if self.energie > self.energie - (self.energie // 4) and self.food_amount <= self.max_food_amount:
-            self.food_amount += 5
-
         # Food
         if self.energie + self.energie_per_food_taken < self.max_energie:
+            # for carnivores the entity must be on a position next to the target entity
             if self.food_regime == 'carnivore':
                 for pos in all_pos_around:
                     if self.world.getEntityAt(pos, self.food_type) != None:
@@ -98,6 +95,7 @@ class Mammal(Entity):
 
                             finished = True
 
+            # for herbivores the entity must be on the same position as the target entity
             if self.food_regime == 'herbivore':
                 if self.world.getEntityAt(self.pos, self.food_type) != None:
                     entity = self.world.getEntityAt(self.pos, self.food_type)
@@ -110,6 +108,8 @@ class Mammal(Entity):
         # Reproduction
         if self.reproduction_energie < self.energie and not finished:
             closer_partner = self.getAroundPartner()
+
+            # Checks if reproduction can take place
             for pos in all_pos_around:
                 if self.world.getEntityAt(pos, self.type) != None:
                     entity = self.world.getEntityAt(pos, self.type)
@@ -131,7 +131,7 @@ class Mammal(Entity):
                 self.loseEnergie('movement')
                 finished = True
 
-            # Reproduction
+            # Create new entity
             if not finished and self.can_reproduction and closer_partner != None:
                 for pos in all_pos_around:
                     if self.world.getEntityAt(pos, self.type) == None and closer_partner.energie > closer_partner.reproduction_energie:
@@ -142,7 +142,8 @@ class Mammal(Entity):
                         break
 
         # Movement
-        if 0 < self.energie and not self.is_hurt and not finished:
+        if 0 < self.food_amount and not self.is_hurt and not finished:
+            # Get nearest food pos
             if self.food_regime == 'herbivore':
                 if self.target_food_pos == self.pos:
                     self.target_food_pos = self.getAroundFood()
@@ -151,10 +152,7 @@ class Mammal(Entity):
                     if self.target_food_pos == pos:
                         self.target_food_pos = self.getAroundFood()
 
-            if self.food_regime == 'carnivore':
-                print("CARNIVORE POS", self.pos)
-                print(">>>", self.getAroundFood())
-            
+            # Move
             if self.target_food_pos != self.pos:
                 x_move = self.pos[0] - self.target_food_pos[0]
                 y_move = self.pos[1] - self.target_food_pos[1]
@@ -165,23 +163,20 @@ class Mammal(Entity):
                 if y_move != 0:
                     direction = (0, int(copysign(1, -y_move)))
 
+                # Apply movement
                 pos = (self.pos[0] + (direction[0]*self.speed), self.pos[1] + (direction[1]*self.speed))
-
                 if self.food_regime == 'carnivore':
                     if self.world.getEntitiesAt(pos, self.food_type, "plants") == []:
                         self.pos = pos
-
-                        print("MOVE TO", pos)
-                        self.loseEnergie('movement')
-                        finished = True
                 elif self.food_regime == 'herbivore':
                     if self.world.getEntitiesAt(pos, self.food_type) == []:
                         self.pos = pos
 
-                        print("MOVE TO", pos)
-                        self.loseEnergie('movement')
-                        finished = True
-            
+                print("MOVE TO", pos)
+                self.loseEnergie('movement')
+                finished = True
+
+            # Random movement  
             if self.target_food_pos == self.pos and not finished:
                 random_pos = choice([(self.pos[0] + (randint(-1, 1) * self.speed), self.pos[1]), (self.pos[0], self.pos[1] + (randint(-1, 1) * self.speed))])
 
@@ -193,16 +188,17 @@ class Mammal(Entity):
                 print("RANDOM MOVE TO", random_pos, '---', self.world.getEntitiesAt(random_pos, self.food_type, "plants") != [])
                 self.loseEnergie('movement')
                 finished = True
-        
-        if self.energie <= 0:
-            self.food_amount -= 20
+
+        # Heal
+        if self.energie > self.max_energie - (self.max_energie // 4) and self.food_amount < self.max_food_amount:
+            self.food_amount += 5
 
         # Kill entity
         if self.food_amount <= 0 or 0 > self.pos[0] or self.pos[0] > self.world.dimensions[0]-1 or 0 > self.pos[1] or self.pos[1] > self.world.dimensions[1]-1:
             self.kill()
 
     def getAroundFood(self) -> tuple:
-        """ Return the direction to go to the nearest food """
+        """ Return the position to the nearest food """
 
         # Large vision
         if self.vision_type == 'large':
@@ -303,9 +299,12 @@ class Mammal(Entity):
 
     def loseEnergie(self, action) -> None:
         """ Dicrease energie depending on the action """
-        if action == 'movement':
-            self.energie -= choice(self.lose_energie)
-        elif action == 'reproduction':
-            self.energie -= self.reproduction_energie
+        if self.energie > 0:
+            if action == 'movement':
+                self.energie -= choice(self.lose_energie)
+            elif action == 'reproduction':
+                self.energie -= self.reproduction_energie
+        else:
+            self.food_amount -= choice(self.lose_energie) * 2
 
     
