@@ -1,6 +1,8 @@
 import pygame
 import string
 
+from requests import delete
+
 from settings import SCREEN_HEIGHT, SCREEN_WIDTH
 
 
@@ -53,6 +55,7 @@ class Component:
         self.pos = pos
         self.groups = groups
         self.display_surface = pygame.display.get_surface()
+        self.parent = None
 
         if self.groups is not []:
             for group in self.groups:
@@ -82,13 +85,17 @@ class Container(Component):
         components : list
         gap : int
         display_method : string
-            'inline' or 'in_block'
+            'inline' or 'in_column'
     """
     def __init__(self, pos, groups, components, gap, display):
         super().__init__(pos, groups)
         self.components = components
         self.gap = gap
         self.display_method = display
+        
+        # Set parent
+        for component in self.components:
+            component.parent = self
 
         # Get size
         self.size = [0,0]
@@ -108,52 +115,106 @@ class Container(Component):
 
                 self.size[0] = max_component_size
                 self.size[1] += (component.size[1] + self.gap)
-            print(component.size, self.gap, component.size[0] + self.gap)
-            print(self.size)
 
+        # Center pos
         self.is_centered = False
-        if self.pos == 'centered':
-            self.pos = (SCREEN_WIDTH/2-self.size[0]/2, SCREEN_HEIGHT/2-self.size[1]/2)
+        if self.pos[0] == 'centered':
+            self.pos = (SCREEN_WIDTH//2 - self.size[0] // 2, self.pos[1])
+            self.is_centered = True
+        if self.pos[1] == 'centered':
+            self.pos = (self.pos[0], SCREEN_HEIGHT//2 - self.size[1] // 2)
             self.is_centered = True
 
         # Call display method
         if self.display_method == 'in_column':
+            self.size[1] -= self.gap
             self.in_column(self.pos, self.gap)
         else:
+            self.size[0] -= self.gap
             self.inline(self.pos, self.gap)
     
     def add(self, component):
         self.components.append(component)
+        self.update()
+
+    def delete(self):
+        self.delete_all()
+        super().delete()
 
     def remove(self, component):
         self.components.remove(component)
+        self.update()
+
+    def remove_all(self):
+        for component in self.components:
+            self.remove(component)
+        
+    def delete_all(self):
+        for component in self.components:
+            component.delete()
 
     def in_column(self, start_pos, gap, component_index=0):
         """ Repositioning components in column """
-        component = self.components[component_index]
+        if self.components != []:
+            component = self.components[component_index]
 
-        if self.is_centered:
-            gap_component = (self.size[0] - component.size[0])/2
-        else:
-            gap_component = 0
+            if self.is_centered:
+                gap_component = (self.size[0] - component.size[0])/2
+            else:
+                gap_component = 0
 
-        component.pos = (start_pos[0] + gap_component, start_pos[1])
-        component.update()
+            component.pos = (start_pos[0] + gap_component, start_pos[1])
+            component.update()
 
-        if not component_index == len(self.components)-1:
-            return self.in_column((start_pos[0], start_pos[1] + component.size[1] + gap), gap, component_index+1)
+            if not component_index == len(self.components)-1:
+                return self.in_column((start_pos[0], start_pos[1] + component.size[1] + gap), gap, component_index+1)
 
     def inline(self, start_pos, gap, component_index=0):
         """ Repositioning components inline """
-        component = self.components[component_index]
-        component.pos = start_pos
-        component.update()
+        if self.components != []:
+            component = self.components[component_index]
+            component.pos = start_pos
+            component.update()
 
-        if not component_index == len(self.components)-1:
-            return self.inline((start_pos[0] + component.size[0] + gap, start_pos[1]), gap, component_index+1)
+            if not component_index == len(self.components)-1:
+                return self.inline((start_pos[0] + component.size[0] + gap, start_pos[1]), gap, component_index+1)
     
     def update(self):
-        pass
+        # Get size
+        self.size = [0,0]
+        max_component_size = 0
+        for component in self.components:
+            if self.display_method == 'inline':
+                # Get the biggest component size
+                if component.size[1] > max_component_size:
+                    max_component_size = component.size[1]
+
+                self.size[0] += (component.size[0] + self.gap)
+                self.size[1] = max_component_size
+            if self.display_method == 'in_column':
+                # Get the biggest component size
+                if component.size[0] > max_component_size:
+                    max_component_size = component.size[0]
+
+                self.size[0] = max_component_size
+                self.size[1] += (component.size[1] + self.gap)
+
+        # Center pos
+        self.is_centered = False
+        if self.pos[0] == 'centered':
+            self.pos = (SCREEN_WIDTH//2 - self.size[0] // 2, self.pos[1])
+            self.is_centered = True
+        if self.pos[1] == 'centered':
+            self.pos = (self.pos[0], SCREEN_HEIGHT//2 - self.size[1] // 2)
+            self.is_centered = True
+
+        # Call display method
+        if self.display_method == 'in_column':
+            self.size[1] -= self.gap
+            self.in_column(self.pos, self.gap)
+        else:
+            self.size[0] -= self.gap
+            self.inline(self.pos, self.gap)
 
     def display(self):
         super().display()
@@ -170,6 +231,46 @@ class Container(Component):
         # pygame.draw.rect(self.display_surface, "red", pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1]), 1)
 
 
+class ButtonBlockContainer(Container):
+    def __init__(self, pos, groups, components, gap, display):
+        super().__init__(pos, groups, components, gap, display)
+        for component in self.components:
+            component.size = (self.size[0], component.size[1])
+            component.update()
+
+
+class Box(Component):
+    def __init__(self, pos, groups, components, gap, display, padding=(10, 10), color=(255,255,255), is_filled=False):
+        super().__init__(pos, groups)
+        self.type = "box"
+        self.components = components
+        self.gap = gap
+        self.display_method = display
+        self.padding = padding
+        self.color = color
+        self.is_filled = is_filled
+
+        # Set parent
+        for component in self.components:
+            component.parent = self
+        
+        self.container = Container((self.pos[0]+self.padding[0], self.pos[1]+self.padding[1]), self.groups, self.components, self.gap, self.display_method)
+        self.container.parent = self
+        self.size = (self.container.size[0]+self.padding[0]*2, self.container.size[1]+self.padding[1]*2)
+        self.border = pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
+        
+    def update(self):
+        self.container.pos = (self.pos[0]+self.padding[0], self.pos[1]+self.padding[1])
+        self.container.update()
+        # self.size = (self.container.size[0]+self.padding[0]*2, self.container.size[1]+self.padding[1]*2)
+        self.border = pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
+
+    def display(self):
+        pygame.draw.rect(self.display_surface, self.color, self.border) if self.is_filled else pygame.draw.rect(self.display_surface, self.color, self.border, 1) # Display border
+
+        self.container.display()
+
+
 # ------------------------------------------
 # Button components
 # ------------------------------------------
@@ -183,13 +284,13 @@ class Button(Component):
         padding : tuple
         color : tuple
     """
-    def __init__(self, pos, groups, text, callback=None, padding=None, color=None):
+    def __init__(self, pos, groups, text, callback=None, padding=(40,10), color=(255,255,255)):
         super().__init__(pos, groups)
         self.type = "button"
         self.text = text
         self.callback = callback
-        self.padding = padding if padding is not None else (40,10)
-        self.color = color if color is not None else (255,255,255)
+        self.padding = padding
+        self.color = color
 
         # Create text
         self.text_surf = self.font.render(self.text, False, self.color)
@@ -197,17 +298,21 @@ class Button(Component):
         text_rect_temp = self.text_surf.get_rect(center=(0,0))
         self.size = (text_rect_temp.width+(self.padding[0]*2), text_rect_temp.height+(self.padding[1]*2))
         self.border = pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
         self.fill = pygame.Rect(self.pos[0], self.pos[1], self.border.width, 0)
         self.fill_height = 0
 
         self.text_rect = self.text_surf.get_rect(center=(self.border.center))
 
         # Interactions
+        self.click_time = pygame.time.get_ticks()
+        self.click_cooldown = 300
         self.is_clicked = False
         self.is_overflown = False
 
     def check_interactions(self):
         """ Hover, click """
+        current_time = pygame.time.get_ticks()
 
         # Hover
         if self.border.collidepoint(self.mouse_pos):
@@ -215,22 +320,25 @@ class Button(Component):
 
             # Click
             if self.mouse_input[0]:
-                self.is_clicked = True
+                if current_time - self.click_time >= self.click_cooldown:
+                    self.click_time = current_time
+                    self.is_clicked = True
 
-                if self.callback is not None:
-                    self.callback()
+                    if self.callback is not None:
+                        self.callback()
             else:
                 self.is_clicked = False
         else:
             self.is_overflown = False
 
     def update(self):
-        """ Update every arguments """
+        """ Update all """
         self.border = pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
         self.fill = pygame.Rect(self.pos[0], self.pos[1], self.border.width, 0)
         self.text_surf = self.font.render(self.text, False, self.color)
         self.text_rect = self.text_surf.get_rect(center=(self.border.center))
-        self.size = (self.text_rect.width+(self.padding[0]*2), self.text_rect.height+(self.padding[1]*2))
+        # self.size = (self.text_rect.width+(self.padding[0]*2), self.text_rect.height+(self.padding[1]*2))
     
     def display(self):
         super().display()
@@ -241,12 +349,14 @@ class Button(Component):
             self.text_surf = self.font.render(self.text, False, (0,0,0))
 
             if self.fill_height <= self.border.height:
-                self.fill_height += 5
+                self.fill_height += self.border.height // 6
+            if self.fill_height > self.border.height:
+                self.fill_height = self.border.height
         else:
             self.text_surf = self.font.render(self.text, False, self.color)
 
             if self.fill_height > 0:
-                self.fill_height -= 5
+                self.fill_height -= self.border.height // 6
 
         # Display border
         if self.is_clicked:
@@ -299,6 +409,26 @@ class Image(Component):
     def display(self):
         super().display()
         self.display_surface.blit(self.surface_scaled, self.rect)
+
+
+class Square(Component):
+    def __init__(self, pos, groups, color, size):
+        super().__init__(pos, groups)
+        self.type = 'square'
+        self.color = color
+        self.size = size
+        self.surface = pygame.Surface(self.size)
+        self.surface.fill(self.color)
+        self.rect = self.surface.get_rect(topleft=self.pos)
+
+    def update(self):
+        self.surface = pygame.Surface(self.size)
+        self.surface.fill(self.color)
+        self.rect = self.surface.get_rect(topleft=self.pos)
+
+    def display(self):
+        super().display()
+        self.display_surface.blit(self.surface, self.rect)
 
 
 class ImageButton(Component):
@@ -382,9 +512,18 @@ class Text(Component):
         self.color = color if color is not None else (255,255,255)
 
         self.font = pygame.font.SysFont('calibri', self.text_size)
-        self.surf = self.font.render(str(text), False, self.color)
-        self.rect = self.surf.get_rect(topleft=self.pos)
+        self.surf = self.font.render(str(self.text), False, self.color)
+        self.rect = self.surf.get_rect(topleft=(0,0))
         self.size = (self.rect.width, self.rect.height)
+
+        # Change pos
+        if self.pos[0] == 'centered':
+            self.pos = (SCREEN_WIDTH//2 - self.size[0] // 2, self.pos[1])
+        if self.pos[1] == 'centered':
+            self.pos = (self.pos[0], SCREEN_HEIGHT//2 - self.size[1] // 2)
+            print(self.pos)
+
+        self.update()
 
     def update(self):
         self.surf = self.font.render(str(self.text), False, self.color)
@@ -396,8 +535,8 @@ class Text(Component):
         self.display_surface.blit(self.surf, self.rect)
 
 
-class TextInput(Component):
-    """ Text input
+class Input(Component):
+    """ Input
 
     args:
         value : string
@@ -409,7 +548,7 @@ class TextInput(Component):
     """
     def __init__(self, pos, groups, value=None, placeholder=None, padding=None, color=None):
         super().__init__(pos, groups)
-        self.type = "text_input"
+        self.type = "input"
         self.value = value if value is not None else ""
         self.placeholder = placeholder if placeholder is not None else ""
         self.padding = padding if padding is not None else (10,5)
@@ -499,7 +638,7 @@ class TextInput(Component):
         if len(self.value) > 0:
             self.value_surf = self.font.render(self.value, True, (255,255,255))
         else:
-            self.value_surf = self.font.render(self.placeholder, True, (255,255,255))
+            self.value_surf = self.font.render(self.placeholder, True, (180,180,180))
 
     def display(self):
         super().display()
@@ -521,7 +660,69 @@ class TextInput(Component):
             pygame.draw.rect(self.display_surface, self.color, self.cursor, 2)
 
 
+class ListInput(Container):
+    """ ListInput
+    ---  
+    
+    Attributes
+        value : list
+    """
+    def __init__(self, pos, groups, components, gap=10, display='inline'):
+        super().__init__(pos, groups, components, gap, display)
+        self.value = [0 for i in range(len(components))]
+
+    def display(self):
+        super().display()
+
+        # Get value
+        for index, input_component in enumerate(self.components):
+            self.value[index] = input_component.value
+
+
+class ColorInput(Container):
+    """ ColorInput
+    ---  
+    
+    Attributes
+        value : list
+    """
+    def __init__(self, pos, groups, components=[], gap=10, display='inline'):
+        super().__init__(pos, groups, components, gap, display)
+        self.components = []
+
+        self.add(Square(pos, [], (255,255,255), (30,30)))
+
+        self.input_components = ComponentsGroup()
+        for l in ['R', 'G', 'B']:
+            self.add(Input(pos, [self.input_components], '255', l))
+
+        self.value = ['255' for i in range(3)]
+
+    def display(self):
+        super().display()
+
+        for component in self.input_components.components:
+            if component.value == '':
+                component.value = '0'
+            if len(component.value) >= 2 and component.value[0] == '0':
+                component.value = component.value[-1:]
+            if int(component.value) > 255:
+                component.value = '255'
+
+        # Get value
+        for index, component in enumerate(self.input_components.components):
+            self.value[index] = component.value
+
+        # Update square color
+        if self.value != "":
+            self.components[0].size = (self.components[1].size[1], self.components[1].size[1])
+            self.components[0].color = [int(v) for v in self.value]
+            self.components[0].update()
+
+
+class ChoiceInput(Component):
+    def __init__(self, pos, groups):
+        super().__init__(pos, groups)
+
+
         
-
-
-

@@ -18,7 +18,7 @@ class Plant(Entity):
         color_base : int
         full_since : int
     """
-    def __init__(self, type, pos, world, color, food_amount, growth_speed, max_regrowth) -> None:
+    def __init__(self, type, pos, world, color, food_amount, growth_speed, max_regrowth, full_since_max) -> None:
         super().__init__(type, pos, world, color)
         self.category = 'plants'
         self.color_base = color
@@ -27,14 +27,21 @@ class Plant(Entity):
         self.food_amount = food_amount
         self.color = (self.color_base[0], self.color_base[1]-self.food_amount, self.color_base[2])
         self.full_since = 0
+        self.full_since_max = full_since_max
 
     def action(self) -> None:
         """ Actions of plants : grow, spread """
         # Grow
         if self.food_amount < self.max_regrowth:
             self.food_amount += self.growth_speed
-            self.color = (self.color_base[0], self.color_base[1]-self.food_amount, self.color_base[2])
-        
+            self.color = [self.color_base[0], self.color_base[1]-self.food_amount/2, self.color_base[2]]
+            
+            for index, val in enumerate(self.color):
+                if val >= 255:
+                    self.color[index] = 255
+                elif val <= 0:
+                    self.color[index] = 0
+
         # Kill
         if self.food_amount <= 0:
             self.kill()
@@ -56,5 +63,8 @@ class Plant(Entity):
                     all_grass_pos.remove(pos)
             
             if len(all_grass_pos) > 0 and new_grass_pos != None:
-                self.world.entities_dict[self.type].append(Plant(self.type, new_grass_pos, self.world, self.color_base, 5, self.growth_speed, self.max_regrowth))
+                self.world.entities_dict[self.type].append(Plant(self.type, new_grass_pos, self.world, self.color_base, 5, self.growth_speed, self.max_regrowth, self.full_since_max))
+        
+        if self.full_since > self.full_since_max:
+            self.kill()
 

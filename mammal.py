@@ -33,11 +33,12 @@ class Mammal(Entity):
 
         genre : str - "female" or "male"
    """
-    def __init__(self, type, pos, world, color, food_amount, max_food_amount, food_taken, food_regime, energie_per_food_taken, food_type, enemy_type, reproduction_energie, max_energie, lose_energie, energie, start_energie, vision_range, vision_type, speed, genre) -> None:
+    def __init__(self, type, pos, world, color, start_food_amount, food_amount, max_food_amount, food_taken, food_regime, energie_per_food_taken, food_type, enemy_type, reproduction_energie, max_energie, lose_energie, energie, start_energie, vision_range, vision_type, speed, genre) -> None:
         super().__init__(type, pos, world, color)
         self.category = 'mammals'
 
-        self.food_amount = food_amount
+        self.food_amount = start_food_amount
+        self.start_food_amount = food_amount
         self.max_food_amount = max_food_amount
         self.food_taken = food_taken
         self.food_regime = food_regime

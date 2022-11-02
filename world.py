@@ -62,9 +62,10 @@ class World:
                         pos, 
                         self, 
                         entity_data['color'],
-                        choice(range(entity_data['food_amount'][0], entity_data['food_amount'][1]+1, 25)), 
+                        choice(range(entity_data['start_food_amount'][0], entity_data['start_food_amount'][1]+1, 10)), 
                         entity_data['growth_speed'],
-                        entity_data['max_regrowth']
+                        entity_data['max_regrowth'],
+                        entity_data['full_since_max']
                     ))
             if category == 'mammals':
                 self.entities_dict[entity_type].append(Mammal(
@@ -72,7 +73,8 @@ class World:
                         pos,
                         self,
                         entity_data['color'], 
-                        entity_data['food_amount'], 
+                        choice(range(entity_data['start_food_amount'][0], entity_data['start_food_amount'][1]+1, 10)), 
+                        entity_data['start_food_amount'],
                         entity_data['max_food_amount'], 
                         entity_data['food_taken'],
                         entity_data['food_regime'],

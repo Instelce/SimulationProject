@@ -1,0 +1,31 @@
+{
+    "category": "text",
+    "type": "text",
+    "color": "color",
+
+    "plants": {
+        "start_food_amount": ["number", "number"],
+        "growth_speed": "number",
+        "max_regrowth": "number",
+        "full_since_max": "number"
+    },
+
+    "mammals": {
+        "start_food_amount": ["number", "number"],
+        "max_food_amount": "number",
+        "food_taken": "number",
+        "food_regime": "text",
+        "energie_per_food_taken": "number",
+        "food_type": "text",
+        "enemy_type": "text",
+        "reproduction_energie": "number",
+        "max_energie": "number",
+        "lose_energie": ["number", "number"],
+        "start_energie": ["number", "number"],
+        "vision_range": "number",
+        "vision_type": "text",
+        "speed": "number"
+    },
+
+    "generate_percentage": "number"
+}

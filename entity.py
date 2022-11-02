@@ -25,7 +25,7 @@ class Entity:
         return self.color
 
     def kill(self):
-        """ Destroy object """
+        """ Destroy entity """
         print(f"{self.type} entity is dead ...")
         self.world.entities_dict[self.type].remove(self)
         del self
