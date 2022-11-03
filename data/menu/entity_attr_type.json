@@ -1,5 +1,5 @@
 {
-    "category": "text",
+    "category": "choice",
     "type": "text",
     "color": "color",
 
@@ -16,7 +16,7 @@
         "food_taken": "number",
         "food_regime": "text",
         "energie_per_food_taken": "number",
-        "food_type": "text",
+        "food_type": "choice",
         "enemy_type": "text",
         "reproduction_energie": "number",
         "max_energie": "number",

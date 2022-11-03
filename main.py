@@ -22,18 +22,18 @@ class WindowManager:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
 
-        self.status = 'main_menu'
+        self.active_window = 'main_menu'
         self.windows = {
             'main_menu': MainMenu(self),
             'simulation_interface': SimulationInterface(self),
             'create_entity_form': CreateEntityForm(self),
             'manage_entities': ManageEntities(self)
         }
-        self.windows[self.status].__init__(self)
+        self.windows[self.active_window].__init__(self)
 
-    def change_window(self, status):
-        self.status = status
-        self.windows[self.status].__init__(self)
+    def change_window(self, window):
+        self.active_window = window
+        self.windows[self.active_window].__init__(self)
     
     def quit_simulation(self):
         pygame.quit()
@@ -54,7 +54,7 @@ class WindowManager:
     def run(self):
         while 1:
             for event in pygame.event.get():
-                self.windows[self.status].event_management(event)
+                self.windows[self.active_window].event_management(event)
 
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -62,7 +62,7 @@ class WindowManager:
 
             self.screen.fill((30, 25, 25))
 
-            self.windows[self.status].display()
+            self.windows[self.active_window].display()
 
             pygame.display.update()
             self.clock.tick(30)

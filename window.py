@@ -60,13 +60,18 @@ class CreateEntityForm(Window):
         super().__init__(window_manager)
         pygame.display.set_caption('Simulation - New Entity')
 
+        # Get entities data
+        self.entities_data = json.load(open('data/entities.json'))
+
         # Get entity attributes type data and their info
         self.entity_attributes_type = json.load(open('data/menu/entity_attr_type.json'))
         self.attributes_type_info = json.load(open('data/menu/attr_type_info.json'))
 
         # Components
+        self.specific_components = ComponentsGroup()
         self.input_components = {}
         self.entity_type = ""
+        self.old_entity_type = ""
 
         self.create_components()
 
@@ -89,73 +94,89 @@ class CreateEntityForm(Window):
                 self.reset_button
             ], 40, 'inline') # Button container
 
-            # Common attributes
+            # Create all COMONS components for COMONS types of attributes
             pos = (40, 80)
             for attribute_name, attribute_type in self.entity_attributes_type.items():
                 if type(attribute_type) != dict:
-                    if attribute_type == 'color':
+                    # Choice inputs
+                    if attribute_name == 'category':
+                        self.input_components[attribute_name] = ChoiceInput(pos, [self.components], ['mammals', 'plants'])
+                    # Color inputs
+                    elif attribute_type == 'color':
                         self.input_components[attribute_name] = ColorInput(pos, [self.components])
-                        container = Container(pos, [self.components], [
-                            Container(pos, [self.components], [
-                                Text(pos, [self.components], attribute_name.replace('_', ' ').upper(), 12, (180,180,180)),
-                                InfoBox(pos, [self.components], self.attributes_type_info[attribute_name], (180,180,180))
-                            ], 20, 'inline'),
-                            self.input_components[attribute_name]
-                        ], component_gap, 'in_column')
-                        pos = (pos[0], pos[1] + container.size[1] + type_gap) # Change pos
+                    # Text and number inputs
                     else:
                         self.input_components[attribute_name] = Input(pos, [self.components], None, attribute_type.capitalize())
-                        container = Container(pos, [self.components], [
-                            Container(pos, [self.components], [
-                                Text(pos, [self.components], attribute_name.replace('_', ' ').upper(), 12, (180,180,180)),
-                                InfoBox(pos, [self.components], self.attributes_type_info[attribute_name], (180,180,180))
-                            ], 20, 'inline'),
-                            self.input_components[attribute_name]
-                        ], component_gap, 'in_column')
-                        pos = (pos[0], pos[1] + container.size[1] + type_gap) # Change pos
-        else:
-            # Specific attributes
+
+                    container = Container(pos, [self.components], [
+                        Container(pos, [self.components], [
+                            Text(pos, [self.components], attribute_name.replace('_', ' ').upper(), 12, (180,180,180)),
+                            InfoBox(pos, [self.components], self.attributes_type_info[attribute_name], (180,180,180))
+                        ], 20, 'inline'),
+                        self.input_components[attribute_name]
+                    ], component_gap, 'in_column')
+
+                    # Change pos
+                    pos = (pos[0], pos[1] + container.size[1] + type_gap) 
+        if self.entity_type == self.input_components['category'].value:
+            # Delete old specific component 
+            if self.old_entity_type != "":
+                for entity_type, entity_attributes in self.entity_attributes_type.items():
+                    if type(entity_attributes) == dict and self.old_entity_type == entity_type:
+                        for attribute_name, attribute_type in entity_attributes.items():
+                            if attribute_name in self.input_components:
+                                print(attribute_name)
+                                self.input_components.pop(attribute_name)
+            self.specific_components = ComponentsGroup()
+
+            # Create all SPECIFIC components for SPECIFIC types of attributes
             pos = (40*2+(SCREEN_WIDTH-160)//3, 80)
             for entity_type, entity_attributes in self.entity_attributes_type.items():
                 if type(entity_attributes) == dict and self.entity_type == entity_type:
                     for attribute_name, attribute_type in entity_attributes.items():
+                        # New column
                         if pos[1] > SCREEN_HEIGHT - 100:
                             pos = (pos[0]+40+(SCREEN_WIDTH-160)//3, 80)
 
-                        if type(attribute_type) == list:
-                            self.input_components[attribute_name] = ListInput(pos, [self.components], [Input(pos, [], None, input_type.capitalize()) for input_type in attribute_type])
-                            container = Container(pos, [self.components], [
-                                Container(pos, [self.components], [
-                                    Text(pos, [self.components], attribute_name.replace('_', ' ').upper(), 12, (180,180,180)),
-                                    InfoBox(pos, [self.components], self.attributes_type_info[attribute_name], (180,180,180))
-                                ], 20, 'inline'),
-                                self.input_components[attribute_name]
-                            ], component_gap, 'in_column')
-                            pos = (pos[0], pos[1] + container.size[1] + type_gap)
+                        # Choice inputs
+                        if attribute_name == 'food_regime':
+                            self.input_components[attribute_name] = ChoiceInput(pos, [self.specific_components], ['herbivore', 'carnivore'])
+                        elif attribute_name == 'food_type':
+                            self.input_components[attribute_name] = ChoiceInput(pos, [self.specific_components], [])
+                        elif attribute_name == 'vision_type':
+                            self.input_components[attribute_name] = ChoiceInput(pos, [self.specific_components], ['large', 'restricted'])
+                        # List inputs
+                        elif type(attribute_type) == list:
+                            self.input_components[attribute_name] = ListInput(pos, [self.specific_components], [Input(pos, [], None, input_type.capitalize()) for input_type in attribute_type])
+                        # Text and number inputs
                         else:
-                            self.input_components[attribute_name] = Input(pos, [self.components], None, attribute_type.capitalize())
-                            container = Container(pos, [self.components], [
-                                Container(pos, [self.components], [
-                                    Text(pos, [self.components], attribute_name.replace('_', ' ').upper(), 12, (180,180,180)),
-                                    InfoBox(pos, [self.components], self.attributes_type_info[attribute_name], (180,180,180))
-                                ], 20, 'inline'),
-                                self.input_components[attribute_name]
-                            ], component_gap, 'in_column')
-                            pos = (pos[0], pos[1] + container.size[1] + type_gap)
+                            self.input_components[attribute_name] = Input(pos, [self.specific_components], None, attribute_type.capitalize())
+                        
+                        container = Container(pos, [self.specific_components], [
+                            Container(pos, [self.specific_components], [
+                                Text(pos, [self.specific_components], attribute_name.replace('_', ' ').upper(), 12, (180,180,180)),
+                                InfoBox(pos, [self.specific_components], self.attributes_type_info[attribute_name], (180,180,180))
+                            ], 20, 'inline'),
+                            self.input_components[attribute_name]
+                        ], component_gap, 'in_column')
+
+                        # Change pos
+                        pos = (pos[0], pos[1] + container.size[1] + type_gap)
 
     def create_entity(self):
         if self.entity_type != "" and self.input_components['type'] != "":
 
-            # Collect all input value
+            # Collect all input values and converts
             entity_data = {}
             for attribute_name, attribute_type in self.entity_attributes_type.items():
                 if attribute_name != 'category':
+                    # Specific attributes
                     if type(attribute_type) == dict and self.entity_type == attribute_name:
                         for specific_attribute_name, specific_attribute_type in self.entity_attributes_type[attribute_name].items():
-                            print(specific_attribute_name, specific_attribute_type)
                             if specific_attribute_name != 'category':
                                 input_component = self.input_components[specific_attribute_name]
 
+                                # Convertion of all types of attributes
                                 if type(specific_attribute_type) == list:
                                     entity_data[specific_attribute_name] = input_component.value
                                     for index, value_type in enumerate(specific_attribute_type):
@@ -166,8 +187,12 @@ class CreateEntityForm(Window):
                                         entity_data[specific_attribute_name] = int(input_component.value)
                                     else:
                                         entity_data[specific_attribute_name] = input_component.value
+
+                    # Comon attributes
                     if type(attribute_type) != dict:
                         input_component = self.input_components[attribute_name]
+
+                        # Convertion of all types of attributes
                         if attribute_type == 'color':
                             print("COLOR", input_component.value, attribute_name, [int(v) for v in input_component.value])
                             entity_data[attribute_name] = [int(v) for v in input_component.value]
@@ -183,7 +208,6 @@ class CreateEntityForm(Window):
                                 entity_data[attribute_name] = input_component.value
 
             # Append new data into entities.json file
-            print(entity_data)
             entities_data = json.load(open('data/entities.json'))
             entities_data[self.input_components['category'].value][entity_data['type']] = entity_data
             write_json_file('data/entities.json', entities_data)
@@ -194,28 +218,39 @@ class CreateEntityForm(Window):
         self.input_components = {}
         self.entity_type = ""
         self.components = ComponentsGroup()
+        self.specific_components = ComponentsGroup()
         self.create_components()
             
     def display(self):
         super().update()
 
+        # Update title text
         self.title_text.text = f"Create {self.input_components['type'].value.capitalize()} Entity" if self.input_components['type'].value != "" else "New Entity"
         self.title_text.update()
 
-        # Update input component
+        # Update input component for get the new input value
         for attribute_name, input_component in self.input_components.items():
-            self.input_components[attribute_name] = self.components.components[self.components.components.index(input_component)]
+            if input_component.groups[0] == self.components:
+                self.input_components[attribute_name] = self.components.components[self.components.components.index(input_component)]
+            else:
+                self.specific_components.components[self.specific_components.components.index(input_component)]
 
-        # Check the category input value
-        if self.entity_type == "":
-            if self.input_components['category'].value == 'plants':
-                self.entity_type = 'plants'
-            elif self.input_components['category'].value == 'mammals':
-                self.entity_type = 'mammals'
-
-            if self.entity_type != "":
-                self.create_components()
-
+        # Change entity type
+        if self.entity_type != self.input_components['category'].value:
+            self.old_entity_type = self.entity_type
+            self.entity_type = self.input_components['category'].value
+            self.create_components()
+        
+        if self.entity_type == "mammals" and self.input_components['food_type'].choices == []:
+            if self.input_components['food_regime'].value == 'herbivore':
+                print([entity for entity in self.entities_data['plants']])
+                self.input_components['food_type'].choices = [entity for entity in self.entities_data['plants']]
+                self.input_components['food_type'].recreate_buttons()
+            elif self.input_components['food_regime'].value == 'carnivore':
+                print([entity for entity in self.entities_data['mammals']])
+                self.input_components['food_type'].choices = [entity for entity in self.entities_data['mammals']]
+                self.input_components['food_type'].recreate_buttons()
+        self.specific_components.display()
         self.components.display()
 
 
@@ -238,39 +273,39 @@ class ManageEntities(Window):
         self.disable_buttons = ComponentsGroup()
 
         self.active_category_text = Text((0,0), [self.components], self.active_category.capitalize())
-
-        self.entities_container = ButtonBlockContainer((0,0), [self.components], [
-            Box((0,0), [self.components], [
-                Text((0,0), [self.components], 
-                entity_name.capitalize(), 
-                None, 
-                (100,100,100) if entity_name in self.disabled_entities else entity_data['color']
-                ),
-                Button((0,0), [self.components, self.disable_buttons], 
-                "Enable" if entity_name in self.disabled_entities else "Disable", 
-                None, 
-                (10,5), 
-                (100,100,100) if entity_name in self.disabled_entities else entity_data['color'])
-            ], 20, 'inline', (40, 10), (100,100,100) if entity_name in self.disabled_entities else entity_data['color']) for entity_name, entity_data in self.entities_data[self.active_category].items()
-        ], 10, 'in_column')
         
+        # Main container
         Container(('centered', 20), [self.components], [
             Text([0,0], [self.components], "Manage Entities", 30),
             Button((0,0), [self.components], "Change Category", self.change_active_category, (20, 5)),
             self.active_category_text,
-            self.entities_container
+            ButtonBlockContainer((0,0), [self.components], [
+                Box((0,0), [self.components], [
+                    Text((0,0), [self.components], 
+                    entity_name.capitalize(), 
+                    None, 
+                    (100,100,100) if entity_name in self.disabled_entities else entity_data['color']
+                    ),
+                    Button((0,0), [self.components, self.disable_buttons], 
+                    "Enable" if entity_name in self.disabled_entities else "Disable", 
+                    None, 
+                    (10,5), 
+                    (100,100,100) if entity_name in self.disabled_entities else entity_data['color'])
+                ], 20, 'inline', (40, 10), (100,100,100) if entity_name in self.disabled_entities else entity_data['color']) for entity_name, entity_data in self.entities_data[self.active_category].items()
+            ], 10, 'in_column')
         ], 20, 'in_column')
 
-        # Buttons
+        # Bottom buttons
         temp_back_text = Text((0,0), [], "Back")
         self.back_button = Button((0,0), [self.components], "Back", self.window_manager.launch_main_menu, (SCREEN_WIDTH//6-40-temp_back_text.size[0]//2+10, 10)) # Back button
         temp_apply_text = Text((0,0), [], "Apply")
         self.apply_button = Button((0,0), [self.components], "Apply", self.apply_choice, (SCREEN_WIDTH//6-40-temp_apply_text.size[0]//2+10, 10)) # Apply button
 
+        # Button container
         Container((40, SCREEN_HEIGHT-60), [self.components], [
             self.back_button,
             self.apply_button,
-        ], 40, 'inline') # Button container
+        ], 40, 'inline')
 
     def manage_button(self):
         current_time = pygame.time.get_ticks()

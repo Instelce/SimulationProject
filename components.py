@@ -1,8 +1,6 @@
 import pygame
 import string
 
-from requests import delete
-
 from settings import SCREEN_HEIGHT, SCREEN_WIDTH
 
 
@@ -17,6 +15,9 @@ class ComponentsGroup:
 
     def add(self, component):
         self.components.append(component)
+    
+    def replace(self, old, new):
+        self.components[self.components.index(old)] = new
 
     def remove(self, component):
         self.components.remove(component)
@@ -237,6 +238,13 @@ class ButtonBlockContainer(Container):
         for component in self.components:
             component.size = (self.size[0], component.size[1])
             component.update()
+    
+    def update(self):
+        super().update()
+
+        for component in self.components:
+            component.size = (self.size[0], component.size[1])
+            component.update()
 
 
 class Box(Component):
@@ -311,7 +319,7 @@ class Button(Component):
 
         # Create text
         self.font = pygame.font.SysFont('calibri', self.text_size)
-        self.text_surf = self.font.render(self.text, False, self.color)
+        self.text_surf = self.font.render(self.text, True, self.color)
 
         text_rect_temp = self.text_surf.get_rect(center=(0,0))
         self.size = (text_rect_temp.width+(self.padding[0]*2), text_rect_temp.height+(self.padding[1]*2))
@@ -547,6 +555,7 @@ class Text(Component):
         self.lines_surf = [self.font.render(str(text), False, self.color) for text in lines]
         self.lines_rect = [surf.get_rect(topleft=(self.pos[0], self.pos[1]+(self.text_size+4)*index)) for index, surf in enumerate(self.lines_surf)]
         self.size = (max([0+rect.width for rect in self.lines_rect]), ((self.text_size+4)*len(lines))-4)
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
 
         # Change pos
         if x_centered:
@@ -561,6 +570,7 @@ class Text(Component):
         self.lines_surf = [self.font.render(str(text), False, self.color) for text in lines]
         self.lines_rect = [surf.get_rect(topleft=(self.pos[0], self.pos[1]+(self.text_size+4)*index)) for index, surf in enumerate(self.lines_surf)]
         self.size = (max([0+rect.width for rect in self.lines_rect]), ((self.text_size+4)*len(lines))-4)
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
 
     def display(self):
         super().display()
@@ -691,7 +701,7 @@ class Input(Component):
         # Update and display cursor
         if self.focus and len(self.value) > 0:
             self.cursor = pygame.Rect(cursor_pos[0], cursor_pos[1], 1, self.font.get_height())
-            pygame.draw.rect(self.display_surface, self.color, self.cursor, 2)
+            pygame.draw.rect(self.display_surface, self.color, self.cursor, 1)
 
 
 class ListInput(Container):
@@ -755,8 +765,89 @@ class ColorInput(Container):
 
 
 class ChoiceInput(Component):
-    def __init__(self, pos, groups):
+    def __init__(self, pos, groups, choices, default_choice=None, padding=(10,5), color=(255,255,255)):
         super().__init__(pos, groups)
+        self.choices = choices
+        self.value = '' if default_choice == None else default_choice
+        self.padding = padding
+        self.color = color
+        self.focus = False
+
+        self.value_surf = self.font.render('Choice', True, self.color) if self.value == '' else self.font.render(self.value, True, self.color)
+
+        temp_value_rect = self.value_surf.get_rect()
+        self.size = (temp_value_rect.width+(self.padding[0]*2), temp_value_rect.height+(self.padding[1]*2))
+        self.border = pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
+
+        self.choices_box_is_visible = False
+        self.choices_box = Box(self.pos, [], [
+            ButtonBlockContainer(self.pos, [], [
+                Button(self.pos, [], choice) for choice in self.choices
+            ], 0, 'in_column')
+        ], 0, 'in_column', (0,0), (30, 25, 25), True)
+    
+    def check_interactions(self):
+        if self.border.collidepoint(self.mouse_pos):
+            if self.mouse_input[0]:
+                self.focus = True
+                self.color = (255,255,255)
+            if not self.focus:
+                self.color = (60,60,60)
+        else:
+            if not self.choices_box.border.collidepoint(self.mouse_pos):
+                if self.mouse_input[0]:
+                    self.focus = False
+                    self.color = (20,20,20)
+                if not self.focus:
+                    self.color = (20,20,20)
+
+    def behaviours(self):
+        self.buttons = self.choices_box.components[0].components
+
+        if self.focus and not self.choices_box_is_visible:
+            self.groups[0].add(self.choices_box)
+            self.choices_box_is_visible = True
+        if not self.focus and self.choices_box_is_visible:
+            self.groups[0].remove(self.choices_box)
+            self.choices_box_is_visible = False
+
+        if self.choices_box_is_visible:
+            for button in self.buttons:
+                if button.is_clicked:
+                    print(button.text)
+                    self.value = button.text
+                    self.update()
+                    self.focus = False
+                    button.is_clicked = False
+
+    def recreate_buttons(self):
+        print(self.choices_box.components[0])
+        self.choices_box.components[0].components = [
+            Button(self.pos, [], choice) for choice in self.choices
+        ]
+        self.choices_box.components[0].update()
+        self.__init__(self.pos, self.groups, self.choices, None, self.padding, self.color)
+
+    def update(self):
+        self.choices_box.pos = (self.pos[0], self.pos[1] + self.size[1])
+        self.choices_box.update()
+
+        self.value_surf = self.font.render('Choice', True, (255,255,255)) if self.value == '' else self.font.render(self.value, True, (255,255,255))
+
+        temp_value_rect = self.value_surf.get_rect()
+        self.size = (temp_value_rect.width+(self.padding[0]*2), temp_value_rect.height+(self.padding[1]*2))
+        self.border = pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
+
+    def display(self):
+        super().display()
+        self.check_interactions()
+
+        self.value_rect = self.value_surf.get_rect(center=self.border.center)
+
+        pygame.draw.rect(self.display_surface, self.color, self.border, 1)
+        self.display_surface.blit(self.value_surf, self.value_rect)
+        
+        self.behaviours()
 
 
 class InfoBox(Component):
@@ -765,25 +856,24 @@ class InfoBox(Component):
         self.info_text = info_text
         self.color = color
 
+        self.last_time = pygame.time.get_ticks()
+
         # Cut text
         all_words = self.info_text.split(' ')
         for index, word in enumerate(all_words):
             if index % 4 == 0 and index != 0:
                 all_words.insert(index, '\n')
-        print(all_words)
         # Insert spaces between words
         final_text = []
         for index, word in enumerate(all_words):
             final_text.append(word)
             if word != "\n" and index != len(all_words)-1:
                 final_text.append(' ')
-                print(final_text, index)
         self.cut_text = "".join(final_text)
-
-        self.last_time = pygame.time.get_ticks()
         
         self.button = Button(self.pos, self.groups, "i", None, (5,2), self.color, 10)
         self.size = self.button.size
+
         self.info_box = None
         self.can_delete = False
 
