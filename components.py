@@ -258,7 +258,23 @@ class Box(Component):
         self.container.parent = self
         self.size = (self.container.size[0]+self.padding[0]*2, self.container.size[1]+self.padding[1]*2)
         self.border = pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
-        
+
+    def add(self, component):
+        self.components.append(component)
+        self.update()
+
+    def delete(self):
+        self.container.delete()
+        super().delete()
+
+    def remove(self, component):
+        self.components.remove(component)
+        self.update()
+
+    def remove_all(self):
+        for component in self.components:
+            self.remove(component)
+
     def update(self):
         self.container.pos = (self.pos[0]+self.padding[0], self.pos[1]+self.padding[1])
         self.container.update()
@@ -284,15 +300,17 @@ class Button(Component):
         padding : tuple
         color : tuple
     """
-    def __init__(self, pos, groups, text, callback=None, padding=(40,10), color=(255,255,255)):
+    def __init__(self, pos, groups, text, callback=None, padding=(40,10), color=(255,255,255), text_size=18):
         super().__init__(pos, groups)
         self.type = "button"
         self.text = text
         self.callback = callback
         self.padding = padding
         self.color = color
+        self.text_size = text_size
 
         # Create text
+        self.font = pygame.font.SysFont('calibri', self.text_size)
         self.text_surf = self.font.render(self.text, False, self.color)
 
         text_rect_temp = self.text_surf.get_rect(center=(0,0))
@@ -504,35 +522,51 @@ class Text(Component):
         text_size : int
             default 18
     """
-    def __init__(self, pos, groups, text, size=None, color=None):
+    def __init__(self, pos, groups, text, size=None, color=None, font_name='calibri'):
         super().__init__(pos, groups)
         self.type = "text"
         self.text = text
         self.text_size = size if size is not None else 18
         self.color = color if color is not None else (255,255,255)
+        self.font_name = font_name
 
-        self.font = pygame.font.SysFont('calibri', self.text_size)
-        self.surf = self.font.render(str(self.text), False, self.color)
-        self.rect = self.surf.get_rect(topleft=(0,0))
-        self.size = (self.rect.width, self.rect.height)
+        self.font = pygame.font.SysFont(self.font_name, self.text_size)
+
+        # Delete 'centered' text in pos
+        x_centered = False
+        if self.pos[0] == 'centered':
+            x_centered = True
+            self.pos = (0, self.pos[1])
+        y_centered = False
+        if self.pos[1] == 'centered':
+            y_centered = True
+            self.pos = (self.pos[0], 0)
+
+        # Line break management
+        lines = self.text.split('\n')
+        self.lines_surf = [self.font.render(str(text), False, self.color) for text in lines]
+        self.lines_rect = [surf.get_rect(topleft=(self.pos[0], self.pos[1]+(self.text_size+4)*index)) for index, surf in enumerate(self.lines_surf)]
+        self.size = (max([0+rect.width for rect in self.lines_rect]), ((self.text_size+4)*len(lines))-4)
 
         # Change pos
-        if self.pos[0] == 'centered':
+        if x_centered:
             self.pos = (SCREEN_WIDTH//2 - self.size[0] // 2, self.pos[1])
-        if self.pos[1] == 'centered':
+        if y_centered:
             self.pos = (self.pos[0], SCREEN_HEIGHT//2 - self.size[1] // 2)
-            print(self.pos)
 
         self.update()
 
     def update(self):
-        self.surf = self.font.render(str(self.text), False, self.color)
-        self.rect = self.surf.get_rect(topleft=self.pos)
-        self.size = (self.rect.width, self.rect.height)
+        lines = self.text.split('\n')
+        self.lines_surf = [self.font.render(str(text), False, self.color) for text in lines]
+        self.lines_rect = [surf.get_rect(topleft=(self.pos[0], self.pos[1]+(self.text_size+4)*index)) for index, surf in enumerate(self.lines_surf)]
+        self.size = (max([0+rect.width for rect in self.lines_rect]), ((self.text_size+4)*len(lines))-4)
 
     def display(self):
         super().display()
-        self.display_surface.blit(self.surf, self.rect)
+
+        for index, surf in enumerate(self.lines_surf):
+            self.display_surface.blit(surf, self.lines_rect[index])
 
 
 class Input(Component):
@@ -725,4 +759,58 @@ class ChoiceInput(Component):
         super().__init__(pos, groups)
 
 
+class InfoBox(Component):
+    def __init__(self, pos, groups, info_text="", color=(255,255,255)):
+        super().__init__(pos, groups)
+        self.info_text = info_text
+        self.color = color
+
+        # Cut text
+        all_words = self.info_text.split(' ')
+        for index, word in enumerate(all_words):
+            if index % 4 == 0 and index != 0:
+                all_words.insert(index, '\n')
+        print(all_words)
+        # Insert spaces between words
+        final_text = []
+        for index, word in enumerate(all_words):
+            final_text.append(word)
+            if word != "\n" and index != len(all_words)-1:
+                final_text.append(' ')
+                print(final_text, index)
+        self.cut_text = "".join(final_text)
+
+        self.last_time = pygame.time.get_ticks()
         
+        self.button = Button(self.pos, self.groups, "i", None, (5,2), self.color, 10)
+        self.size = self.button.size
+        self.info_box = None
+        self.can_delete = False
+
+    def update(self):
+        self.button.pos = self.pos
+        self.button.update()
+
+    def show_box(self):
+        current_time = pygame.time.get_ticks()
+
+        if self.button.is_clicked and self.info_box == None:
+            if current_time - self.last_time >= 300:
+                self.last_time = current_time
+                self.info_box = Box((self.pos[0]+20, self.pos[1]), self.groups, [Text(self.pos, self.groups, self.cut_text, 18, None)], 0, 'inline', (10,5), (50,50,50), True)
+
+        if current_time - self.last_time >= 300 and self.info_box != None:
+            self.last_time = current_time
+            self.can_delete = True
+
+        if self.can_delete:
+            if not self.info_box.border.collidepoint(self.mouse_pos):
+                if self.mouse_input[0]:
+                    self.info_box.delete()
+                    self.info_box = None
+                    self.can_delete = False
+
+    def display(self):
+        super().display()
+        self.show_box()
+

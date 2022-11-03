@@ -60,8 +60,9 @@ class CreateEntityForm(Window):
         super().__init__(window_manager)
         pygame.display.set_caption('Simulation - New Entity')
 
-        # Get entity attributes type data
+        # Get entity attributes type data and their info
         self.entity_attributes_type = json.load(open('data/menu/entity_attr_type.json'))
+        self.attributes_type_info = json.load(open('data/menu/attr_type_info.json'))
 
         # Components
         self.input_components = {}
@@ -74,7 +75,7 @@ class CreateEntityForm(Window):
         component_gap = 10
 
         if self.entity_type == "":
-            self.title_text = Text(('centered',20), [self.components], f"New Entity", 30) # Title
+            self.title_text = Text(('centered',20), [self.components], "New Entity", 30) # Title
             temp_back_text = Text((0,0), [], "Back") 
             temp_create_text = Text((0,0), [], "Create")
             temp_reset_text = Text((0,0), [], "Reset")
@@ -95,14 +96,20 @@ class CreateEntityForm(Window):
                     if attribute_type == 'color':
                         self.input_components[attribute_name] = ColorInput(pos, [self.components])
                         container = Container(pos, [self.components], [
-                            Text(pos, [self.components], attribute_name.replace('_', ' ').upper(), 12, (180,180,180)),
+                            Container(pos, [self.components], [
+                                Text(pos, [self.components], attribute_name.replace('_', ' ').upper(), 12, (180,180,180)),
+                                InfoBox(pos, [self.components], self.attributes_type_info[attribute_name], (180,180,180))
+                            ], 20, 'inline'),
                             self.input_components[attribute_name]
                         ], component_gap, 'in_column')
                         pos = (pos[0], pos[1] + container.size[1] + type_gap) # Change pos
                     else:
                         self.input_components[attribute_name] = Input(pos, [self.components], None, attribute_type.capitalize())
                         container = Container(pos, [self.components], [
-                            Text(pos, [self.components], attribute_name.replace('_', ' ').upper(), 12, (180,180,180)),
+                            Container(pos, [self.components], [
+                                Text(pos, [self.components], attribute_name.replace('_', ' ').upper(), 12, (180,180,180)),
+                                InfoBox(pos, [self.components], self.attributes_type_info[attribute_name], (180,180,180))
+                            ], 20, 'inline'),
                             self.input_components[attribute_name]
                         ], component_gap, 'in_column')
                         pos = (pos[0], pos[1] + container.size[1] + type_gap) # Change pos
@@ -118,14 +125,20 @@ class CreateEntityForm(Window):
                         if type(attribute_type) == list:
                             self.input_components[attribute_name] = ListInput(pos, [self.components], [Input(pos, [], None, input_type.capitalize()) for input_type in attribute_type])
                             container = Container(pos, [self.components], [
-                                Text(pos, [self.components], attribute_name.replace('_', ' ').upper(), 12, (180,180,180)),
+                                Container(pos, [self.components], [
+                                    Text(pos, [self.components], attribute_name.replace('_', ' ').upper(), 12, (180,180,180)),
+                                    InfoBox(pos, [self.components], self.attributes_type_info[attribute_name], (180,180,180))
+                                ], 20, 'inline'),
                                 self.input_components[attribute_name]
                             ], component_gap, 'in_column')
                             pos = (pos[0], pos[1] + container.size[1] + type_gap)
                         else:
                             self.input_components[attribute_name] = Input(pos, [self.components], None, attribute_type.capitalize())
                             container = Container(pos, [self.components], [
-                                Text(pos, [self.components], attribute_name.replace('_', ' ').upper(), 12, (180,180,180)),
+                                Container(pos, [self.components], [
+                                    Text(pos, [self.components], attribute_name.replace('_', ' ').upper(), 12, (180,180,180)),
+                                    InfoBox(pos, [self.components], self.attributes_type_info[attribute_name], (180,180,180))
+                                ], 20, 'inline'),
                                 self.input_components[attribute_name]
                             ], component_gap, 'in_column')
                             pos = (pos[0], pos[1] + container.size[1] + type_gap)

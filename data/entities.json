@@ -32,22 +32,6 @@
             "full_since_max": 20,
             "generate_percentage": 2
         },
-        "caca": {
-            "type": "caca",
-            "color": [
-                200,
-                100,
-                40
-            ],
-            "start_food_amount": [
-                50,
-                1000
-            ],
-            "growth_speed": 10,
-            "max_regrowth": 1000,
-            "full_since_max": 1,
-            "generate_percentage": 10
-        },
         "cactus": {
             "type": "cactus",
             "color": [
