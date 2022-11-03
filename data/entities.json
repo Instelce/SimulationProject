@@ -177,6 +177,38 @@
             "vision_type": "large",
             "speed": 1,
             "generate_percentage": 1
+        },
+        "squirel": {
+            "type": "squirel",
+            "color": [
+                255,
+                80,
+                100
+            ],
+            "start_food_amount": [
+                50,
+                100
+            ],
+            "max_food_amount": 150,
+            "food_taken": 10,
+            "food_regime": "herbivore",
+            "energie_per_food_taken": 10,
+            "food_type": "zucchini",
+            "enemy_type": "wolf",
+            "reproduction_energie": 80,
+            "max_energie": 150,
+            "lose_energie": [
+                2,
+                5
+            ],
+            "start_energie": [
+                100,
+                120
+            ],
+            "vision_range": 4,
+            "vision_type": "large",
+            "speed": 1,
+            "generate_percentage": 1
         }
     }
 }

@@ -1,27 +1,27 @@
 {
-    "category": "mammals or plants",
+    "category": "Mammals or plants",
     "type": "Name of your entity",
     "color": "Rgb color",
 
-    "start_food_amount": "The simulation takes random number between these two number\n\nFood Amount also corresponds to the life of the entity Life",
+    "start_food_amount": "The entity's amount of food will start with a random number between these two number\n\nFood Amount also corresponds to the life of the entity Life",
 
     "growth_speed": "",
     "max_regrowth": "",
     "full_since_max": "",
 
-    "max_food_amount": "",
-    "food_taken": "",
-    "food_regime": "",
-    "energie_per_food_taken": "",
-    "food_type": "",
-    "enemy_type": "",
-    "reproduction_energie": "",
-    "max_energie": "",
-    "lose_energie": "",
-    "start_energie": "",
-    "vision_range": "",
-    "vision_type": "",
-    "speed": "",
+    "max_food_amount": "Maximum of food amount and also of the life",
+    "food_taken": "Number of food that the entity takes for an iteration of the simulation when it can eat",
+    "energie_per_food_taken": "Energy obtained for the number of food taken",
+    "food_regime": "Herbivore or carnivore",
+    "food_type": "An entity",
+    "enemy_type": "An entity",
+    "reproduction_energie": "Energy that the reproduction will take",
+    "max_energie": "Maximum of energy",
+    "lose_energie": "The entity will lose random number between these two numbers at each iteration of the simulation",
+    "start_energie": "The entity's energy will start with a random number between these two number",
+    "vision_range": "Vision range",
+    "vision_type": "Large or restricted\n\nLarge : the entity sees everywhere around her ((vision_range*2)+1, (vision_range*2)+1)\nRestricted : The entity sees only on the horizontal and vertical lines",
+    "speed": "Number of cases that the entity travel in an iteration of the simulation",
 
-    "generate_percentage": ""
+    "generate_percentage": "Percentage of entity in the simulation"
 }

@@ -861,7 +861,7 @@ class InfoBox(Component):
         # Cut text
         all_words = self.info_text.split(' ')
         for index, word in enumerate(all_words):
-            if index % 4 == 0 and index != 0:
+            if index % 5 == 0 and index != 0:
                 all_words.insert(index, '\n')
         # Insert spaces between words
         final_text = []
@@ -882,12 +882,19 @@ class InfoBox(Component):
         self.button.update()
 
     def show_box(self):
+        self.update()
         current_time = pygame.time.get_ticks()
 
         if self.button.is_clicked and self.info_box == None:
             if current_time - self.last_time >= 300:
                 self.last_time = current_time
                 self.info_box = Box((self.pos[0]+20, self.pos[1]), self.groups, [Text(self.pos, self.groups, self.cut_text, 18, None)], 0, 'inline', (10,5), (50,50,50), True)
+                if self.info_box.border.topright[0] > SCREEN_WIDTH:
+                    self.info_box.pos = [self.pos[0]-self.info_box.size[0]-20, self.pos[1]]
+                    self.info_box.update()
+                if self.info_box.border.bottomleft[1] > SCREEN_HEIGHT:
+                    self.info_box.pos = [self.info_box.pos[0], self.pos[1]-self.info_box.size[1]+20]
+                    self.info_box.update()
 
         if current_time - self.last_time >= 300 and self.info_box != None:
             self.last_time = current_time

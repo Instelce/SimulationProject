@@ -145,6 +145,8 @@ class CreateEntityForm(Window):
                             self.input_components[attribute_name] = ChoiceInput(pos, [self.specific_components], [])
                         elif attribute_name == 'vision_type':
                             self.input_components[attribute_name] = ChoiceInput(pos, [self.specific_components], ['large', 'restricted'])
+                        elif attribute_name == 'enemy_type':
+                            self.input_components[attribute_name] = ChoiceInput(pos, [self.specific_components], [entity for entity in self.entities_data['mammals']])
                         # List inputs
                         elif type(attribute_type) == list:
                             self.input_components[attribute_name] = ListInput(pos, [self.specific_components], [Input(pos, [], None, input_type.capitalize()) for input_type in attribute_type])
