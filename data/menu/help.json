@@ -1,0 +1,26 @@
+[
+    {
+        "keys": "r",
+        "help": "Remove all entities in the world"
+    },
+    {
+        "keys": "g",
+        "help": "Launch simulation"
+    },
+    {
+        "keys": "c",
+        "help": "Toggle needless custom cursor"
+    },
+    {
+        "keys": "m",
+        "help": "Toggle interface (button...)"
+    },
+    {
+        "keys": "Right Click",
+        "help": "Remove the entities"
+    },
+    {
+        "keys": "Left Click",
+        "help": "Adds the selected entity"
+    }
+]

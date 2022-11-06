@@ -62,6 +62,7 @@ class Mammal(Entity):
 
         self.is_hurt = False
         self.target_food_pos = None
+        self.closer_partner = None
 
     def action(self):
         """ Actions : food, movement, escape, reproduction """
@@ -81,7 +82,7 @@ class Mammal(Entity):
             (self.pos[0], self.pos[1] + 1), # down
         ]
 
-        # Food
+        # FOOD
         if self.energie + self.energie_per_food_taken < self.max_energie:
             # for carnivores the entity must be on a position next to the target entity
             if self.food_regime == 'carnivore':
@@ -106,43 +107,46 @@ class Mammal(Entity):
 
                         finished = True
         
-        # Reproduction
+        # REPRODUCTION
         if self.reproduction_energie < self.energie and not finished:
-            closer_partner = self.getAroundPartner()
+            self.closer_partner = self.getAroundPartner()
 
-            # Checks if reproduction can take place
-            for pos in all_pos_around:
-                if self.world.getEntityAt(pos, self.type) != None:
-                    entity = self.world.getEntityAt(pos, self.type)
-                    if entity.genre != self.genre:
+            if self.closer_partner != None:
+                # Checks if reproduction can take place
+                for pos in all_pos_around:
+                    if self.closer_partner.pos == pos and self.closer_partner.energie > self.closer_partner.reproduction_energie:
                         self.can_reproduction = True
                         break
+                    # if self.world.getEntityAt(pos, self.type) != None:
+                    #     entity = self.world.getEntityAt(pos, self.type)
+                    #     if entity.genre != self.genre:
+                    #         self.can_reproduction = True
+                    #         break
 
-            # Move to partner
-            if not self.can_reproduction and closer_partner != None:
-                x_move = self.pos[0] - closer_partner.pos[0]
-                y_move = self.pos[1] - closer_partner.pos[1]
+                # Move to partner
+                if not self.can_reproduction:
+                    x_move = self.pos[0] - self.closer_partner.pos[0]
+                    y_move = self.pos[1] - self.closer_partner.pos[1]
 
-                if x_move != 0:
-                    direction = (int(copysign(1, -x_move)), 0)
-                if y_move != 0:
-                    direction = (0, int(copysign(1, -y_move)))
+                    if x_move != 0:
+                        direction = (int(copysign(1, -x_move)), 0)
+                    if y_move != 0:
+                        direction = (0, int(copysign(1, -y_move)))
 
-                self.pos = (self.pos[0] + direction[0], self.pos[1] + direction[1])
-                self.loseEnergie('movement')
-                finished = True
+                    self.pos = (self.pos[0] + direction[0], self.pos[1] + direction[1])
+                    self.loseEnergie('movement')
+                    finished = True
 
-            # Create new entity
-            if not finished and self.can_reproduction and closer_partner != None:
-                for pos in all_pos_around:
-                    if self.world.getEntityAt(pos, self.type) == None and closer_partner.energie > closer_partner.reproduction_energie:
+                # Create new entity
+                if self.can_reproduction and not finished:
+                    if self.genre == 'female':
+                        print(f"NEW {self.type}")
                         self.loseEnergie('reproduction')
-                        if self.genre == 'female':
-                            self.world.createEntity(pos, self.category, self.__dict__)
+                        self.closer_partner.loseEnergie('reproduction')
+                        self.world.createEntity(choice(all_pos_around), self.category, self.__dict__)
                         finished = True
-                        break
 
-        # Movement
+        # MOVEMENT
         if 0 < self.food_amount and not self.is_hurt and not finished:
             # Get nearest food pos
             if self.food_regime == 'herbivore':
@@ -280,7 +284,7 @@ class Mammal(Entity):
     
     def getAroundPartner(self) -> Entity:
         """ Return the nearest entity according to gender and type """
-        closer_partner = None
+        self.closer_partner = None
         closer_distance = 0
 
         for entity in self.world.entities_dict[self.type]:
@@ -289,14 +293,14 @@ class Mammal(Entity):
                     # Calculate the distance
                     distance = abs(self.pos[0]-entity.pos[0]) + abs(self.pos[1]-entity.pos[1])
 
-                    if closer_partner == None: # Start
-                        closer_partner = entity
+                    if self.closer_partner == None: # Start
+                        self.closer_partner = entity
                         closer_distance = distance
                     elif distance < closer_distance: # Get the nearest partner
-                        closer_partner = entity
+                        self.closer_partner = entity
                         closer_distance = distance
 
-        return closer_partner 
+        return self.closer_partner 
 
     def loseEnergie(self, action) -> None:
         """ Dicrease energie depending on the action """

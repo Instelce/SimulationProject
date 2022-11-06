@@ -1,4 +1,3 @@
-from html import entities
 import pygame
 import json
 import sys
@@ -48,8 +47,9 @@ class MainMenu(Window):
             Button((0,0), [self.components], "Launch Simulation", self.window_manager.launch_simulation_interface),
             Button((0,0), [self.components], "Create Entity", self.window_manager.launch_create_entity_form),
             Button((0,0), [self.components], "Manage Entity", self.window_manager.launch_manage_entities),
+            Button((0,0), [self.components], "Help", self.window_manager.launch_help),
             Button((0,0), [self.components], "Quit", self.window_manager.quit_simulation)
-        ], 20, 'in_column')
+        ], 20, 'in_column')        
 
     def display(self):
         self.components.display()
@@ -65,7 +65,7 @@ class CreateEntityForm(Window):
 
         # Get entity attributes type data and their info
         self.entity_attributes_type = json.load(open('data/menu/entity_attr_type.json'))
-        self.attributes_type_info = json.load(open('data/menu/attr_type_info.json'))
+        self.attributes_type_info = json.load(open('data/menu/attr_info.json'))
 
         # Components
         self.specific_components = ComponentsGroup()
@@ -259,6 +259,7 @@ class CreateEntityForm(Window):
 class ManageEntities(Window):
     def __init__(self, window_manager) -> None:
         super().__init__(window_manager)
+        pygame.display.set_caption('Simulation - Manage Entities')
 
         # Get entities data
         self.entities_data = json.load(open('data/entities.json'))
@@ -338,4 +339,34 @@ class ManageEntities(Window):
         self.active_category_text.text = self.active_category.capitalize()
         self.active_category_text.update()
 
+        self.components.display()
+
+
+class Help(Window):
+    def __init__(self, window_manager) -> None:
+        super().__init__(window_manager)
+
+        self.help_data = json.load(open('data/menu/help.json'))
+
+        self.create_components()
+
+    def create_components(self):
+        Container(('centered', 20), [self.components], [
+            Text((0,0), [self.components], "Help", 40),
+            Container((0,0), [self.components], [
+                Box((0,0), [self.components], [
+                    Text((0,0), [self.components], keys_dict['keys']),
+                    Text((0,0), [self.components], keys_dict['help'])
+                ], 40, 'inline', (10, 10), (50,50,50)) for keys_dict in self.help_data
+            ], 10, 'in_column')
+        ], 40, 'in_column')
+
+        temp_back_text = Text((0,0), [], "Back")
+        self.back_button = Button((0,0), [self.components], "Back", self.window_manager.launch_main_menu, (SCREEN_WIDTH//6-40-temp_back_text.size[0]//2+10, 10)) # Back button
+
+        Container((40, SCREEN_HEIGHT-60), [self.components], [
+            self.back_button,
+        ], 40, 'inline')
+
+    def display(self):
         self.components.display()

@@ -4,7 +4,7 @@ from settings import *
 from components import *
 from support import *
 from interface import SimulationInterface
-from window import MainMenu, CreateEntityForm, ManageEntities
+from window import *
 
 
 class WindowManager:
@@ -27,7 +27,8 @@ class WindowManager:
             'main_menu': MainMenu(self),
             'simulation_interface': SimulationInterface(self),
             'create_entity_form': CreateEntityForm(self),
-            'manage_entities': ManageEntities(self)
+            'manage_entities': ManageEntities(self),
+            'help': Help(self),
         }
         self.windows[self.active_window].__init__(self)
 
@@ -50,6 +51,9 @@ class WindowManager:
 
     def launch_manage_entities(self):
         self.change_window('manage_entities')
+    
+    def launch_help(self):
+        self.change_window('help')
 
     def run(self):
         while 1:

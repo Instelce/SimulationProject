@@ -88,6 +88,7 @@ class SimulationInterface(Window):
         # Components
         self.show_components = True
         self.components = ComponentsGroup()
+        self.pause_text = Text(('centered', SCREEN_HEIGHT-40), [], "PAUSE")
 
         # Entities data : only enabled entities
         self.entities_data = {}
@@ -234,6 +235,8 @@ class SimulationInterface(Window):
                 self.show_components = not self.show_components
             if event.key == pygame.K_c:
                 self.show_custom_cursor = not self.show_custom_cursor
+            if event.key == pygame.K_q:
+                self.window_manager.launch_main_menu()
      
     def display(self):
         # Manage cursor
@@ -266,11 +269,15 @@ class SimulationInterface(Window):
             self.components.display()
             self.entities_panel_management()
 
+        # Pause text
+        if self.pause:
+            self.pause_text.display()
+
         # Debug
         # if self.show_components:
         #     entity_in_mouse = self.world.getEntityAt(self.mouse_pos_world, "sheep")
         #     debug((self.selected_rect.x / TILE_SIZE, self.selected_rect.y / TILE_SIZE))
-        #     debug(f"{len(self.entities.sprites())} / {WORLD_WIDTH*WORLD_HEIGHT}", 30)
+            # debug(f"{len(self.entities.sprites())} / {WORLD_WIDTH*WORLD_HEIGHT}", 30)
         #     debug(f"{[e.type for e in self.world.getEntitiesAt(self.mouse_pos_world)]}", 50)
         #     debug(f"pause {self.pause}", 70)
         #     debug(f"{self.world.time[0]} h {self.world.time[1]} min", 90)

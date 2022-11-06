@@ -779,6 +779,8 @@ class ChoiceInput(Component):
         self.size = (temp_value_rect.width+(self.padding[0]*2), temp_value_rect.height+(self.padding[1]*2))
         self.border = pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
 
+        # Choice box
+        self.box_is_replace = False
         self.choices_box_is_visible = False
         self.choices_box = Box(self.pos, [], [
             ButtonBlockContainer(self.pos, [], [
@@ -814,14 +816,12 @@ class ChoiceInput(Component):
         if self.choices_box_is_visible:
             for button in self.buttons:
                 if button.is_clicked:
-                    print(button.text)
                     self.value = button.text
                     self.update()
                     self.focus = False
                     button.is_clicked = False
 
     def recreate_buttons(self):
-        print(self.choices_box.components[0])
         self.choices_box.components[0].components = [
             Button(self.pos, [], choice) for choice in self.choices
         ]
@@ -829,7 +829,12 @@ class ChoiceInput(Component):
         self.__init__(self.pos, self.groups, self.choices, None, self.padding, self.color)
 
     def update(self):
-        self.choices_box.pos = (self.pos[0], self.pos[1] + self.size[1])
+        if self.choices_box.border.bottomleft[1] > SCREEN_HEIGHT and not self.box_is_replace:
+            self.choices_box.pos = (self.pos[0], self.pos[1] - self.choices_box.size[1])
+            self.box_is_replace = True
+        elif not self.box_is_replace:
+            self.choices_box.pos = (self.pos[0], self.pos[1] + self.size[1])
+            self.box_is_replace = True
         self.choices_box.update()
 
         self.value_surf = self.font.render('Choice', True, (255,255,255)) if self.value == '' else self.font.render(self.value, True, (255,255,255))
