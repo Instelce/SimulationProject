@@ -269,11 +269,15 @@ class ManageEntities(Window):
 
         self.click_time = pygame.time.get_ticks()
 
+        self.show_delete_box = False
+        self.can_click_in_button = True
+
         self.create_components()
 
     def create_components(self):
         self.components = ComponentsGroup()
         self.disable_buttons = ComponentsGroup()
+        self.delete_buttons = ComponentsGroup()
 
         self.active_category_text = Text((0,0), [self.components], self.active_category.capitalize())
         
@@ -296,37 +300,102 @@ class ManageEntities(Window):
                     "Enable" if entity_name in self.disabled_entities else "Disable", 
                     None, 
                     (10,5), 
+                    (100,100,100) if entity_name in self.disabled_entities else entity_data['color']),
+                    Button((0,0), [self.components, self.delete_buttons], 
+                    "Delete", 
+                    None, 
+                    (10,5), 
                     (100,100,100) if entity_name in self.disabled_entities else entity_data['color'])
                 ], 20, 'inline', (40, 10), (100,100,100) if entity_name in self.disabled_entities else entity_data['color']) for entity_name, entity_data in self.entities_data[self.active_category].items()
             ], 10, 'in_column')
         ], 20, 'in_column')
+
+        # Delete box
+        self.delete_confirm_button = Button((0,0), [], "Yes, delete")
+        self.cancel_button = Button((0,0), [], "No, cancel")
+        self.delete_box = Box(('centered', 'centered'), [], [
+            Text((0,0), [], "Are you sure you want\nto delete this entity ?", 28),
+            Text((0,0), [], ""),
+            Container((0,0), [], [    
+                self.delete_confirm_button,
+                self.cancel_button
+            ], 10, 'inline')
+        ], 20, 'in_column', (10,10), (50,50,50), True)
 
         # Bottom buttons
         temp_back_text = Text((0,0), [], "Back")
         self.back_button = Button((0,0), [self.components], "Back", self.window_manager.launch_main_menu, (SCREEN_WIDTH//6-40-temp_back_text.size[0]//2+10, 10)) # Back button
         temp_apply_text = Text((0,0), [], "Apply")
         self.apply_button = Button((0,0), [self.components], "Apply", self.apply_choice, (SCREEN_WIDTH//6-40-temp_apply_text.size[0]//2+10, 10)) # Apply button
+        temp_apply_text = Text((0,0), [], "Undo")
+        self.undo_button = Button((0,0), [self.components], "Undo", self.undo, (SCREEN_WIDTH//6-40-temp_apply_text.size[0]//2+10, 10)) # Undo button
 
         # Button container
         Container((40, SCREEN_HEIGHT-60), [self.components], [
             self.back_button,
             self.apply_button,
+            self.undo_button
         ], 40, 'inline')
 
-    def manage_button(self):
+    def components_behaviours(self):
         current_time = pygame.time.get_ticks()
-        for button in self.disable_buttons.components:
-            if button.is_clicked and current_time - self.click_time >= 300:
-                self.click_time = current_time
-                entity_name = button.parent.components[0].text.lower() # get entity name from the text attributes of text Component
 
-                # Update components
-                if entity_name in self.disabled_entities:
-                    self.disabled_entities.remove(entity_name)                    
+        if self.can_click_in_button:
+            # Disable entity buttons
+            for button in self.disable_buttons.components:
+                if button.is_clicked and current_time - self.click_time >= 300:
+                    self.click_time = current_time
+                    entity_name = button.parent.components[0].text.lower() # get entity name from the text attributes of text Component
+
+                    # Update components
+                    if entity_name in self.disabled_entities:
+                        self.disabled_entities.remove(entity_name)                    
+                    else:
+                        self.disabled_entities.append(entity_name)
                     self.create_components()
-                else:
-                    self.disabled_entities.append(entity_name)
-                    self.create_components()
+
+            # Delete entity buttons
+            for button in self.delete_buttons.components:
+                if button.is_clicked and current_time - self.click_time >= 300:
+                    self.click_time = current_time
+                    entity_name = button.parent.components[0].text.lower() # get entity name from the text attributes of text Component
+                    
+                    print(self.delete_box.container.components[1].text)
+                    self.delete_box.container.components[1].text = entity_name
+                    self.delete_box.container.components[1].update()
+                    print(self.delete_box.container.components[1].text)
+                    
+                    self.show_delete_box = True
+        print(self.show_delete_box)
+        # Delete box
+        if self.show_delete_box:
+            self.can_click_in_button = False
+            if self.delete_confirm_button.is_clicked:
+                entity_name = self.delete_box.container.components[1].text
+                print(entity_name)
+                # Get category of entity
+                for category, entities in self.entities_data.items():
+                    for entity in entities:
+                        if entity == entity_name:
+                            entity_category = category
+
+                print(entity_category, entity_name)
+
+                # Write file and change data
+                write_json_file('data/old_entities.json', self.entities_data)
+                self.entities_data[entity_category].pop(entity_name)
+                write_json_file('data/entities.json', self.entities_data)
+                self.delete_confirm_button.is_clicked = False
+                self.show_delete_box = False
+                self.create_components()
+            if self.cancel_button.is_clicked:
+                self.show_delete_box = False
+                self.cancel_button.is_clicked = False
+            
+            self.delete_box.update()
+            self.delete_box.display()
+        else:
+            self.can_click_in_button = True
 
     def change_active_category(self):
         self.active_category = 'mammals' if self.active_category == 'plants' else 'plants'
@@ -336,13 +405,18 @@ class ManageEntities(Window):
         write_json_file('data\disabled_entities.json', {'disabled': self.disabled_entities})
         self.window_manager.launch_main_menu()
 
-    def display(self):
-        self.manage_button()
+    def undo(self):
+        old_data = json.load(open('data/old_entities.json'))
+        write_json_file('data/entities.json', old_data)
+        self.entities_data = old_data
+        self.create_components()
 
+    def display(self):
         self.active_category_text.text = self.active_category.capitalize()
         self.active_category_text.update()
 
         self.components.display()
+        self.components_behaviours()
 
 
 class Help(Window):

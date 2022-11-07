@@ -1,8 +1,7 @@
 {
     "disabled": [
         "caca",
-        "zucchini",
-        "dog",
-        "squirel"
+        "squirel",
+        "dog"
     ]
 }

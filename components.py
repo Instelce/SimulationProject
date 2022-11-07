@@ -30,15 +30,10 @@ class ComponentsGroup:
         for component in self.components:
             component.delete()
 
-    def inline(self, start_pos, gap, component_index=0):
-        """ Repositioning components inline """
-        component = self.components[component_index]
-        component.pos = (start_pos[0], start_pos[1])
-        component.update()
-
-        if not component_index == len(self.components)-1:
-            return self.inline((start_pos[0] + component.size[0] + gap, start_pos[1]), gap, component_index+1)
-
+    def update(self):
+        for component in self.components:
+            component.update()
+            
     def display(self):
         for component in self.components:
             component.display()
@@ -258,14 +253,21 @@ class Box(Component):
         self.color = color
         self.is_filled = is_filled
 
-        # Set parent
-        for component in self.components:
-            component.parent = self
-        
-        self.container = Container((self.pos[0]+self.padding[0], self.pos[1]+self.padding[1]), self.groups, self.components, self.gap, self.display_method)
+        # # Set parent
+        # for component in self.components:
+        #     component.parent = self
+
+        self.container = Container((0,0), self.groups, self.components, self.gap, self.display_method)
         self.container.parent = self
         self.size = (self.container.size[0]+self.padding[0]*2, self.container.size[1]+self.padding[1]*2)
-        self.border = pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
+        self.border = pygame.Rect(0, 0, self.size[0], self.size[1])
+
+        if self.pos[0] == 'centered':
+            self.pos = (SCREEN_WIDTH//2 - self.size[0] // 2, self.pos[1])
+            self.is_centered = True
+        if self.pos[1] == 'centered':
+            self.pos = (self.pos[0], SCREEN_HEIGHT//2 - self.size[1] // 2)
+            self.is_centered = True
 
     def add(self, component):
         self.components.append(component)

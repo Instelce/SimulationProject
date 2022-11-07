@@ -31,22 +31,6 @@
             "max_regrowth": 200,
             "full_since_max": 20,
             "generate_percentage": 2
-        },
-        "geranium": {
-            "type": "geranium",
-            "color": [
-                255,
-                100,
-                255
-            ],
-            "start_food_amount": [
-                50,
-                100
-            ],
-            "growth_speed": 5,
-            "max_regrowth": 100,
-            "full_since_max": 10,
-            "generate_percentage": 5
         }
     },
     "mammals": {
