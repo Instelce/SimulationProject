@@ -856,25 +856,29 @@ class ChoiceInput(Component):
 
 
 class InfoBox(Component):
-    def __init__(self, pos, groups, info_text="", color=(255,255,255)):
+    def __init__(self, pos, groups, info_text="", color=(255,255,255), break_line=True, words_in_line=4):
         super().__init__(pos, groups)
         self.info_text = info_text
         self.color = color
+        self.words_in_line = words_in_line
 
         self.last_time = pygame.time.get_ticks()
 
         # Cut text
-        all_words = self.info_text.split(' ')
-        for index, word in enumerate(all_words):
-            if index % 5 == 0 and index != 0:
-                all_words.insert(index, '\n')
-        # Insert spaces between words
-        final_text = []
-        for index, word in enumerate(all_words):
-            final_text.append(word)
-            if word != "\n" and index != len(all_words)-1:
-                final_text.append(' ')
-        self.cut_text = "".join(final_text)
+        if break_line:
+            all_words = self.info_text.split(' ')
+            for index, word in enumerate(all_words):
+                if index % (words_in_line) == 0 and index != 0:
+                    all_words.insert(index, '\n')
+            # Insert spaces between words
+            final_text = []
+            for index, word in enumerate(all_words):
+                final_text.append(word)
+                if word != "\n" and index != len(all_words)-1:
+                    final_text.append(' ')
+            self.cut_text = "".join(final_text)
+        else:
+            self.cut_text = self.info_text
         
         self.button = Button(self.pos, self.groups, "i", None, (5,2), self.color, 10)
         self.size = self.button.size
@@ -896,10 +900,9 @@ class InfoBox(Component):
                 self.info_box = Box((self.pos[0]+20, self.pos[1]), self.groups, [Text(self.pos, self.groups, self.cut_text, 18, None)], 0, 'inline', (10,5), (50,50,50), True)
                 if self.info_box.border.topright[0] > SCREEN_WIDTH:
                     self.info_box.pos = [self.pos[0]-self.info_box.size[0]-20, self.pos[1]]
-                    self.info_box.update()
                 if self.info_box.border.bottomleft[1] > SCREEN_HEIGHT:
                     self.info_box.pos = [self.info_box.pos[0], self.pos[1]-self.info_box.size[1]+20]
-                    self.info_box.update()
+                self.info_box.update()
 
         if current_time - self.last_time >= 300 and self.info_box != None:
             self.last_time = current_time

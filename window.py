@@ -289,6 +289,9 @@ class ManageEntities(Window):
                     None, 
                     (100,100,100) if entity_name in self.disabled_entities else entity_data['color']
                     ),
+                    InfoBox((0,0), [self.components], 
+                    "".join([f"{attribute} : {attribute_value}\n" for attribute, attribute_value in entity_data.items()]), 
+                    (100,100,100) if entity_name in self.disabled_entities else entity_data['color'], False),
                     Button((0,0), [self.components, self.disable_buttons], 
                     "Enable" if entity_name in self.disabled_entities else "Disable", 
                     None, 
@@ -356,7 +359,7 @@ class Help(Window):
             Container((0,0), [self.components], [
                 Box((0,0), [self.components], [
                     Text((0,0), [self.components], keys_dict['keys']),
-                    Text((0,0), [self.components], keys_dict['help'])
+                    Text((0,0), [self.components], keys_dict['help'], None, (180,180,180))
                 ], 40, 'inline', (10, 10), (50,50,50)) for keys_dict in self.help_data
             ], 10, 'in_column')
         ], 40, 'in_column')
